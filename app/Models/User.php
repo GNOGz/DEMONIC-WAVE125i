@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'profile_img',
     ];
 
     /**
@@ -46,8 +47,24 @@ class User extends Authenticatable
         ];
     }
 
-    public function carts()
+
+    public function address(): HasOne
     {
-        return $this->hasOne(Cart::class);
+        return $this->hasOne(Address::class , 'user_id', 'address_id');
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'user_id', 'orders_id');
+    }
+
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(Wishlist::class, 'user_id', 'wishlists_id');
+    }
+
+    public function cart(): HasMany
+    {
+        return $this->hasMany(Cart::class);
     }
 }
