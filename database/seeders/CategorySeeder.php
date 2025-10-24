@@ -21,7 +21,6 @@ class CategorySeeder extends Seeder
             ['name' => 'Spoke Wheel', 'description' => 'A lightweight, sturdy spoke wheel that ensures smooth rotation and evenly distributes load.'],
         ];
 
-
         foreach ($categories as $category) {
             Category::firstOrCreate(
                 ['name' => $category['name']], // search by unique column
