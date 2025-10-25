@@ -12,7 +12,7 @@
         @php
             $photoUrl = $user->profile_img
                 ? route('user.photo', ['filename' => $user->profile_img])
-                : asset('images/default-photo.jpg'); // Make sure this file exists
+                : asset('images/profile/default-photo.jpg'); // Make sure this file exists
         @endphp
         <div class="mt-6 ml-5 mr-16">
             <x-input-label for="current_photo" :value="__('Current Profile Photo')" />
