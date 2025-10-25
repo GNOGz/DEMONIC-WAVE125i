@@ -11,9 +11,6 @@
                 <div class="p-6 text-gray-900">
                     {{ __("You're logged in!") }}
                 </div>
-                @php $imgUrl = asset('images/products/Spoken Wheel/wheel-1.jpg')
-                @endphp
-            <img src="{{$imgUrl}}" alt="Profile Photo" class="w-32 h-32 object-cover rounded-full" />
             </div>
         </div>
     </div>
