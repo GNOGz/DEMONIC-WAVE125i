@@ -15,7 +15,7 @@
     @php
         $address = $user->address;
     @endphp
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-4">
+    <form id="profile-form" method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-4 ml-5">
         @csrf
         @method('patch')
         <x-input-label for="name" :value="__('Name')" />
@@ -56,7 +56,7 @@
         <div id="phone-section">
             <x-input-label for="name" :value="__('Phone Number')" />
             <x-text-input id="phone" name="phone_number" type="text" class="mt-1 block w-full"
-                :value="old('phone_number', $user->phone_number)" required autofocus autocomplete="phone_number" />
+                :value="old('phone_number', $address->phone_number)" required autofocus autocomplete="phone_number" />
             <x-input-error class="mt-2" :messages="$errors->get('phone_number')" />
         </div>
         <div id="address-section" class="">
@@ -73,18 +73,20 @@
                 <x-text-input id="address_country" name="country" type="text" class="mt-1 block w-full max-w-[9.5rem]"
                     :value="old('country', $address->country)" required autofocus autocomplete="country" />
                 <x-input-error class="mt-2" :messages="$errors->get('country')" />
-                <x-text-input id="address_postal_code" name="postal_code" type="text" class="mt-1 block w-full max-w-[9.5rem]"
-                    :value="old('postal_code', $address->postal_code)" required autofocus autocomplete="postal_code" />
+                <x-text-input id="address_postal_code" name="postal_code" type="text"
+                    class="mt-1 block w-full max-w-[9.5rem]" :value="old('postal_code', $address->postal_code)" required
+                    autofocus autocomplete="postal_code" />
                 <x-input-error class="mt-2" :messages="$errors->get('postal_code')" />
             </div>
         </div>
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
 
-            @if (session('status') === 'profile-updated')
-                <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600">{{ __('Saved.') }}</p>
-            @endif
-        </div>
     </form>
+    <div class="flex items-center gap-4 mt-5 ">
+        <x-primary-button type="submit" form="profile-form" >{{ __('Save') }}</x-primary-button>
+
+        @if (session('status') === 'profile-updated')
+            <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)"
+                class="text-sm text-gray-600">{{ __('Saved.') }}</p>
+        @endif
+    </div>
 </section>
