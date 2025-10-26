@@ -1,21 +1,17 @@
 <section>
     <header>
         <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Profile Information') }}
+            {{ __('Update Address') }}
         </h2>
 
         <p class="mt-1 text-sm text-gray-600">
-            {{ __("Update your account's profile information and email address.") }}
+            {{ __('Make sure to validate your address information.') }}
         </p>
     </header>
-
-    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
-        @csrf
-    </form>
     @php
-        $address = $user->address;
+        $userAddress = $user->address;
     @endphp
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-4">
+    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
         @csrf
         @method('patch')
         <x-input-label for="name" :value="__('Name')" />
@@ -58,25 +54,6 @@
             <x-text-input id="phone" name="phone_number" type="text" class="mt-1 block w-full"
                 :value="old('phone_number', $user->phone_number)" required autofocus autocomplete="phone_number" />
             <x-input-error class="mt-2" :messages="$errors->get('phone_number')" />
-        </div>
-        <div id="address-section" class="">
-            <x-input-label for="Address" :value="__('Address')" />
-            <x-text-input id="address_detail" name="detail" type="text" class="mt-1 block w-full" :value="old('detail', $address->detail)" required autofocus autocomplete="detail" />
-            <x-input-error class="mt-2" :messages="$errors->get('detail')" />
-            <div class="flex flex-row justify-center items-center gap-3 mt-2">
-                <x-text-input id="address_district" name="distric" type="text" class="mt-1 block w-full max-w-[9.5rem]"
-                    :value="old('distric', $address->distric)" required autofocus autocomplete="distric" />
-                <x-input-error class="mt-2" :messages="$errors->get('distric')" />
-                <x-text-input id="address_province" name="province" type="text" class="mt-1 block w-full max-w-[9.5rem]"
-                    :value="old('province', $address->province)" required autofocus autocomplete="province" />
-                <x-input-error class="mt-2" :messages="$errors->get('province')" />
-                <x-text-input id="address_country" name="country" type="text" class="mt-1 block w-full max-w-[9.5rem]"
-                    :value="old('country', $address->country)" required autofocus autocomplete="country" />
-                <x-input-error class="mt-2" :messages="$errors->get('country')" />
-                <x-text-input id="address_postal_code" name="postal_code" type="text" class="mt-1 block w-full max-w-[9.5rem]"
-                    :value="old('postal_code', $address->postal_code)" required autofocus autocomplete="postal_code" />
-                <x-input-error class="mt-2" :messages="$errors->get('postal_code')" />
-            </div>
         </div>
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>

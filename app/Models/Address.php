@@ -10,12 +10,13 @@ class Address extends Model
     protected $table = 'addresses';
 
     protected $fillable = [
-        'user_id',
+        'id',
         'detail',
         'distric',
         'province',
         'postal_code',
         'phone_number',
+        'country',
     ];
 
     protected $casts = [

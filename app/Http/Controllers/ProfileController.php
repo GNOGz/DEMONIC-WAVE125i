@@ -25,14 +25,25 @@ class ProfileController extends Controller
      * Update the user's profile information.
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
-    {
-        $request->user()->fill($request->validated());
+    {//update form goes here
+        $validated = $request->validated();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // Separate fields for User and Address
+        $userData = collect($validated)->only(['fname', 'lname', 'email'])->toArray();
+        $addressData = collect($validated)->only(['phone_number', 'postal_code', 'distric', 'province', 'detail','country'])->toArray();
+
+        // Update user info
+        $user = $request->user();
+        $user->fill($userData);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
+
+        // Update or create address
+        $user->address()->updateOrCreate([], $addressData);
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }

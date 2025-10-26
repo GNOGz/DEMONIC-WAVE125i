@@ -55,7 +55,7 @@ class User extends Authenticatable
 
     public function address(): HasOne
     {
-        return $this->hasOne(Address::class , 'user_id', 'address_id');
+        return $this->hasOne(Address::class , 'id', 'id');
     }
 
     public function orders(): HasMany
