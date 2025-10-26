@@ -4,9 +4,9 @@
             {{ __('Profile Information') }}
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600">
+        {{-- <p class="mt-1 text-sm text-gray-600">
             {{ __("Update your account's profile information and email address.") }}
-        </p>
+        </p> --}}
     </header>
 
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
@@ -15,16 +15,17 @@
     @php
         $address = $user->address;
     @endphp
-    <form id="profile-form" method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-4 ml-5">
+    <form id="profile-form" method="post" action="{{ route('profile.update') }}" class="mt-5 space-y-4 ml-14">
         @csrf
         @method('patch')
-        <x-input-label for="name" :value="__('Name')" />
-        <div id="name-section" class="flex flex-row gap-3">
-            <div>
+        <div id="name-section" class="flex flex-row gap-3 ">
+            <div class="w-full">
+                <x-input-label for="name" :value="__('First Name')" />
                 <x-text-input id="name" name="fname" type="text" class="mt-1 block w-full" :value="old('fname', $user->fname)" required autofocus autocomplete="fname" />
                 <x-input-error class="mt-2" :messages="$errors->get('fname')" />
             </div>
-            <div>
+            <div class="w-full">
+                <x-input-label for="name" :value="__('Last Name')" />
                 <x-text-input id="name" name="lname" type="text" class="mt-1 block w-full" :value="old('lname', $user->lname)" required autofocus autocomplete="lname" />
                 <x-input-error class="mt-2" :messages="$errors->get('lname')" />
             </div>
@@ -82,7 +83,7 @@
 
     </form>
     <div class="flex items-center gap-4 mt-5 ">
-        <x-primary-button type="submit" form="profile-form" >{{ __('Save') }}</x-primary-button>
+        <x-primary-button type="submit" form="profile-form">{{ __('Save') }}</x-primary-button>
 
         @if (session('status') === 'profile-updated')
             <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)"

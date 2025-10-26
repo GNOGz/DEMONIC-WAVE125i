@@ -1,21 +1,21 @@
 <section>
     <header>
         <h2 class="text-lg font-medium text-gray-900 ">
-            {{ __('Profile Photo') }}
+            {{ __('Update Profile Picture') }}
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600 ">
+        {{-- <p class="mt-1 text-sm text-gray-600 ">
             {{ __('Update your profile photo.') }}
-        </p>
+        </p> --}}
     </header>
     <div class="flex flex-row items-center justify-center ">
         @php
             $photoUrl = $user->profile_img
                 ? route('user.photo', ['filename' => $user->profile_img])
-                : asset('images/profile/default-photo.jpg'); // Make sure this file exists
+                : asset('images/profile/default-photo.jpg'); // default photo path in private folder
         @endphp
         <div class="mt-6 ml-5 mr-16">
-            <x-input-label for="current_photo" :value="__('Current Profile Photo')" />
+            {{-- <x-input-label for="current_photo" :value="__('Current Profile Photo')" /> --}}
             <div class="mt-1">
                 <img src="{{$photoUrl}}" alt="Profile Photo"
                     class="w-32 h-32 object-cover rounded-full" />
