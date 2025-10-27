@@ -41,11 +41,12 @@ class CartController extends Controller
     {
         $user = Auth::user();
         $cartItems = $user->cart()->with('product')->get();
+            $allSelected = $cartItems->isNotEmpty() && $cartItems->every(fn($item) => $item->is_selected == 1);
         $subtotal = $cartItems->where('is_selected', 1)->sum(function($item) {
             return $item->product->price * $item->quantity;
         });
         $shipping = 50;
-        return view('cart.index', compact('cartItems', 'subtotal', 'shipping'));
+            return view('cart.index', compact('cartItems', 'subtotal', 'shipping', 'allSelected'));
     }
 
     public function show($id)
@@ -121,14 +122,22 @@ class CartController extends Controller
             $cartItem->is_selected = $isSelected;
             $cartItem->save();
             
-            return response()->json([
-                'status' => 'success',
-                'cart_item_id' => $cartItem->id,
-                'is_selected' => $cartItem->is_selected
-            ]);
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'status' => 'success',
+                    'cart_item_id' => $cartItem->id,
+                    'is_selected' => $cartItem->is_selected
+                ]);
+            }
+
+            return redirect()->route('cart.index')->with('success', 'Selection updated successfully');
         } catch (\Exception $e) {
             \Log::error('Error updating cart selection: ' . $e->getMessage());
-            return response()->json(['status' => 'error', 'message' => 'Failed to update selection'], 500);
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['status' => 'error', 'message' => 'Failed to update selection'], 500);
+            }
+
+            return redirect()->route('cart.index')->with('error', 'Failed to update selection');
         }
     }
 
@@ -140,13 +149,21 @@ class CartController extends Controller
             
             $user->cart()->update(['is_selected' => $isSelected]);
             
-            return response()->json([
-                'status' => 'success',
-                'is_selected' => $isSelected
-            ]);
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'status' => 'success',
+                    'is_selected' => $isSelected
+                ]);
+            }
+
+            return redirect()->route('cart.index')->with('success', 'Selections updated successfully');
         } catch (\Exception $e) {
             \Log::error('Error updating all cart selections: ' . $e->getMessage());
-            return response()->json(['status' => 'error', 'message' => 'Failed to update selections'], 500);
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['status' => 'error', 'message' => 'Failed to update selections'], 500);
+            }
+
+            return redirect()->route('cart.index')->with('error', 'Failed to update selections');
         }
     }
 

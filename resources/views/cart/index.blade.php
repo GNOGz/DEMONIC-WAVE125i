@@ -16,11 +16,20 @@
 			@else
 				@foreach($cartItems as $item)
 				<div class="flex items-center space-x-4 border-b pb-6">
-					<!-- checkbox -->
+					<!-- selection form -->
 					<div>
-						<input type="checkbox" class="cart-checkbox h-5 w-5 rounded border-gray-300" 
-							data-id="{{ $item['id'] ?? $item->id ?? '' }}"
-							{{ ($item['is_selected'] ?? $item->is_selected ?? 0) == 1 ? 'checked' : '' }}>
+						<form method="POST" action="{{ route('cart.select', $item->id) }}" class="select-form">
+							@csrf
+							@method('PATCH')
+							<input type="hidden" name="is_selected" value="{{ $item->is_selected == 1 ? '0' : '1' }}">
+							<button type="submit" class="w-5 h-5 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 {{ $item->is_selected == 1 ? 'bg-blue-500' : 'bg-white' }}">
+								@if($item->is_selected == 1)
+									<svg class="w-4 h-4 text-white mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+									</svg>
+								@endif
+							</button>
+						</form>
 					</div>
 
 					<!-- image -->
@@ -75,8 +84,21 @@
 		<footer class="mt-10 border-t pt-6">
 			<div class="flex items-center justify-between">
 				<div class="flex items-center gap-3">
-					<input id="select-all" type="checkbox" class="h-5 w-5 rounded border-gray-300">
-					<label for="select-all" class="text-sm text-gray-600">Select All</label>
+					<form method="POST" action="{{ route('cart.selectAll') }}" id="select-all-form">
+						@csrf
+						@method('PATCH')
+						<input type="hidden" name="is_selected" value="{{ $allSelected ?? false ? '0' : '1' }}">
+						<button type="submit" class="flex items-center gap-2">
+							<span class="w-5 h-5 rounded border border-gray-300 inline-flex items-center justify-center {{ $allSelected ?? false ? 'bg-blue-500' : 'bg-white' }}">
+								@if($allSelected ?? false)
+									<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+									</svg>
+								@endif
+							</span>
+							<span class="text-sm text-gray-600">Select All</span>
+						</button>
+					</form>
 				</div>
 
 				<div class="text-right">
@@ -98,88 +120,69 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-	// Handle cart item selection
-	document.querySelectorAll('.cart-checkbox').forEach(checkbox => {
-		checkbox.addEventListener('change', async function() {
-			const cartId = this.dataset.id;
-			const isSelected = this.checked;
+	const cartIndexUrl = "{{ route('cart.index') }}";
+
+	// Handle individual selection forms (toggle single item)
+	document.querySelectorAll('.select-form').forEach(form => {
+		form.addEventListener('submit', async function(e) {
+			e.preventDefault();
+			const formEl = this;
+			const btn = formEl.querySelector('button[type="submit"]');
+			const hiddenInput = formEl.querySelector('input[name="is_selected"]');
+			const formData = new FormData(formEl);
 
 			try {
-				const response = await fetch(`/cart/${cartId}/select`, {
-					method: 'PATCH',
+				const response = await fetch(formEl.action, {
+					method: 'POST',
 					headers: {
-						'Content-Type': 'application/json',
-						'Accept': 'application/json',
-						'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+						'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+						'Accept': 'application/json'
 					},
-					body: JSON.stringify({
-						is_selected: isSelected
-					})
+					body: formData
 				});
 
 				if (!response.ok) throw new Error('Network response was not ok');
-				
 				const data = await response.json();
 				if (data.status === 'success') {
-					// Update select all checkbox if needed
-					const selectAll = document.getElementById('select-all');
-					if (selectAll) {
-						const checkboxes = document.querySelectorAll('.cart-checkbox');
-						selectAll.checked = Array.from(checkboxes).every(cb => cb.checked);
-					}
+					// server updated; navigate to cart index to show new state
+					window.location.href = cartIndexUrl;
 				} else {
-					// Revert checkbox if update failed
-					this.checked = !isSelected;
+					throw new Error(data.message || 'Update failed');
 				}
 			} catch (error) {
-				console.error('Error:', error);
-				// Revert checkbox if update failed
-				this.checked = !isSelected;
+				console.error('Error toggling selection:', error);
+				alert('Failed to update selection. Please try again.');
 			}
 		});
 	});
 
-	// Handle select all checkbox
-	const selectAll = document.getElementById('select-all');
-	if (selectAll) {
-		selectAll.addEventListener('change', async function() {
-			const isSelected = this.checked;
-			const checkboxes = document.querySelectorAll('.cart-checkbox');
-			let success = true;
-
-			// Try to update all items
-			for (const checkbox of checkboxes) {
-				try {
-					const cartId = checkbox.dataset.id;
-					const response = await fetch(`/cart/${cartId}/select`, {
-						method: 'PATCH',
-						headers: {
-							'Content-Type': 'application/json',
-							'Accept': 'application/json',
-							'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-						},
-						body: JSON.stringify({
-							is_selected: isSelected
-						})
-					});
-
-					if (!response.ok) {
-						success = false;
-						break;
-					}
-				} catch (error) {
-					console.error('Error:', error);
-					success = false;
-					break;
+	// Handle Select All form (update all items)
+	const selectAllForm = document.getElementById('select-all-form');
+	if (selectAllForm) {
+		selectAllForm.addEventListener('submit', async function(e) {
+			e.preventDefault();
+			const formEl = this;
+			const formData = new FormData(formEl);
+			try {
+				const response = await fetch(formEl.action, {
+					method: 'POST',
+					headers: {
+						'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+						'Accept': 'application/json'
+					},
+					body: formData
+				});
+				if (!response.ok) throw new Error('Network response was not ok');
+				const data = await response.json();
+				if (data.status === 'success') {
+					// server updated all selections; navigate to cart index to reflect state
+					window.location.href = cartIndexUrl;
+				} else {
+					throw new Error(data.message || 'Update failed');
 				}
-			}
-
-			// Update UI based on success
-			if (success) {
-				checkboxes.forEach(cb => cb.checked = isSelected);
-			} else {
-				this.checked = !isSelected;
-				alert('Failed to update some items. Please try again.');
+			} catch (error) {
+				console.error('Error selecting all:', error);
+				alert('Failed to update selections. Please try again.');
 			}
 		});
 	}
