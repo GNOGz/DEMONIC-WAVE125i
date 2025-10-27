@@ -24,7 +24,6 @@ class User extends Authenticatable
         'email',
         'password',
         'profile_img',
-        'email',
         'address_id'
     ];
 
@@ -59,12 +58,12 @@ class User extends Authenticatable
 
     public function orders(): HasMany
     {
-        return $this->hasMany(Order::class, 'user_id', 'orders_id');
+        return $this->hasMany(Order::class, 'user_id', 'id');
     }
 
     public function wishlists(): HasMany
     {
-        return $this->hasMany(Wishlist::class, 'user_id', 'wishlists_id');
+        return $this->hasMany(Wishlist::class, 'user_id', 'id');
     }
 
     public function cart(): HasMany

@@ -3,17 +3,28 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Wishlist extends Model
 {
-    //
-    public function user():HasOne
+    protected $fillable = [
+        'user_id',
+        'product_id',
+    ];
+
+    /**
+     * The user who created the wishlist entry.
+     */
+    public function user(): BelongsTo
     {
-        return $this->hasOne(User::class, 'id', 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function product():HasOne
+    /**
+     * The product referenced by this wishlist entry.
+     */
+    public function product(): BelongsTo
     {
-        return $this->hasOne(Product::class, 'id', 'product_id');
+        return $this->belongsTo(Product::class, 'product_id');
     }
 }
