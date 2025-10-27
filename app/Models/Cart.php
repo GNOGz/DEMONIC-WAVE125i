@@ -13,6 +13,10 @@ class Cart extends Model
         'is_selected'
     ];
 
+    protected $casts = [
+        'is_selected' => 'boolean'
+    ];
+
     public function product()
     {
         return $this->belongsTo(Product::class, 'product_id');

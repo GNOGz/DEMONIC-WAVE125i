@@ -13,7 +13,7 @@ class CartController extends Controller
     {
         $user = Auth::user();
         $cartItems = $user->cart()->with('product')->get();
-        $subtotal = $cartItems->sum(function($item) {
+        $subtotal = $cartItems->where('is_selected', 1)->sum(function($item) {
             return $item->product->price * $item->quantity;
         });
         $shipping = 50;
@@ -24,27 +24,6 @@ class CartController extends Controller
     {
         $product = Product::with('category')->findOrFail($id);
         return view('products.show', compact('product'));
-    }
-
-
-    public function addToCart(Request $request, $productId)
-    {
-        $user = Auth::user();
-        $quantity = $request->input('quantity', 1);
-
-        $cartItem = $user->cart()->where('product_id', $productId)->first();
-
-        if ($cartItem) {
-            $cartItem->quantity += $quantity;
-            $cartItem->save();
-        } else {
-            $user->cartItems()->create([
-                'product_id' => $productId,
-                'quantity' => $quantity,
-            ]);
-        }
-
-        return redirect()->route('cart.index')->with('success', 'Product added to cart!');
     }
 
     public function updateCart(Request $request, $cartItemId)
@@ -100,10 +79,53 @@ class CartController extends Controller
         return redirect()->route('cart.index')->with('success', 'Cart cleared successfully!');
     }
 
+    public function updateSelection(Request $request, $cartItemId)
+    {
+        $user = Auth::user();
+        $cartItem = $user->cart()->where('id', $cartItemId)->first();
+        
+        if (!$cartItem) {
+            return response()->json(['status' => 'error', 'message' => 'Cart item not found'], 404);
+        }
+
+        try {
+            $isSelected = $request->boolean('is_selected');
+            $cartItem->is_selected = $isSelected;
+            $cartItem->save();
+            
+            return response()->json([
+                'status' => 'success',
+                'cart_item_id' => $cartItem->id,
+                'is_selected' => $cartItem->is_selected
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error updating cart selection: ' . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Failed to update selection'], 500);
+        }
+    }
+
+    public function updateAllSelection(Request $request)
+    {
+        $user = Auth::user();
+        try {
+            $isSelected = $request->boolean('is_selected');
+            
+            $user->cart()->update(['is_selected' => $isSelected]);
+            
+            return response()->json([
+                'status' => 'success',
+                'is_selected' => $isSelected
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error updating all cart selections: ' . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Failed to update selections'], 500);
+        }
+    }
+
     public function toggle(Request $request)
     {
         $cartItem = Auth::user()->cart()->where('product_id', $request->product_id)->first();
-        if(!isset($cartItem[$product_id])){
+        if(!$request->product_id){
             return back();
         }
         if ($cartItem) {
@@ -129,31 +151,69 @@ class CartController extends Controller
         return back();
     }
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1'
+        ]);
+
+        $user = Auth::user();
+        
+        // Check if product already exists in cart
+        $existingItem = $user->cart()->where('product_id', $request->product_id)->first();
+        
+        if ($existingItem) {
+            // Update quantity if product already in cart
+            $existingItem->quantity += $request->quantity;
+            $existingItem->save();
+        } else {
+            // Create new cart item
+            $user->cart()->create([
+                'product_id' => $request->product_id,
+                'quantity' => $request->quantity,
+                'is_selected' => 0
+            ]);
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['status' => 'success', 'message' => 'Item added to cart']);
+        }
+
+        return redirect()->route('cart.index')->with('success', 'Item added to cart successfully!');
+    }
+
     public function checkout(Request $request)
     {
         $user = Auth::user();
-        $selectedItems = json_decode($request->input('selected_items', '[]'), true);
-        
-        if (empty($selectedItems)) {
-            return redirect()->route('cart.index')->with('error', 'Please select items to checkout');
+        // If frontend sent selected_items JSON (with quantities), prefer that
+        $selectedItemsPayload = json_decode($request->input('selected_items', '[]'), true);
+
+        if (!empty($selectedItemsPayload) && is_array($selectedItemsPayload)) {
+            // Map payload items (id + quantity) to actual cart items with products
+            $cartItems = collect($selectedItemsPayload)->map(function($item) use ($user) {
+                $cartItem = $user->cart()->with('product')->find($item['id'] ?? null);
+                if ($cartItem) {
+                    $cartItem->checkout_quantity = intval($item['quantity'] ?? $cartItem->quantity);
+                }
+                return $cartItem;
+            })->filter();
+        } else {
+            // Fallback: use DB-selected items
+            $cartItems = $user->cart()->with('product')->where('is_selected', 1)->get();
+            // Set checkout quantity same as cart quantity for selected items
+            $cartItems->each(function($item) {
+                $item->checkout_quantity = $item->quantity;
+            });
         }
 
-        // Get cart items with products
-        $cartItems = collect($selectedItems)->map(function($item) use ($user) {
-            $cartItem = $user->cart()->with('product')->find($item['id']);
-            if ($cartItem) {
-                $cartItem->checkout_quantity = intval($item['quantity']);
-            }
-            return $cartItem;
-        })->filter();
-
         if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'No valid items found');
+            return redirect()->route('cart.index')->with('error', 'Please select items to checkout');
         }
 
         // Calculate totals
         $subtotal = $cartItems->sum(function($item) {
-            return $item->product->price * $item->checkout_quantity;
+            return $item->product->price * ($item->checkout_quantity ?? $item->quantity);
         });
         $shipping = 50;
         $total = $subtotal + $shipping;
