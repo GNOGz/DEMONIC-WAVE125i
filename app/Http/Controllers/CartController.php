@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Cart;
+use App\Models\Product;
 
 class CartController extends Controller
 {
@@ -18,6 +19,13 @@ class CartController extends Controller
         $shipping = 50;
         return view('cart.index', compact('cartItems', 'subtotal', 'shipping'));
     }
+
+    public function show($id)
+    {
+        $product = Product::with('category')->findOrFail($id);
+        return view('products.show', compact('product'));
+    }
+
 
     public function addToCart(Request $request, $productId)
     {
@@ -64,6 +72,12 @@ class CartController extends Controller
         }
 
         return redirect()->route('cart.index')->with('error', 'Cart item not found.');
+    }
+
+    // compatibility with resource route which expects update()
+    public function update(Request $request, $id)
+    {
+        return $this->updateCart($request, $id);
     }
 
     public function removeFromCart($cartItemId)

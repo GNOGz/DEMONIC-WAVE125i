@@ -23,8 +23,13 @@
 					<!-- image -->
 					<div>
 						<div class="w-28 h-20 bg-gray-200 rounded-md overflow-hidden">
-							@if(isset($item['product']['image']) && $item['product']['image'])
-								<img src="{{ $item['product']['image'] }}" alt="{{ $item['product']['title'] ?? 'product' }}" class="object-cover w-full h-full">
+							@php $p = $item->product ?? null; @endphp
+							@if($p && (isset($p->image_url) || isset($p->image)))
+								{{-- prefer image_url or image property depending on your model --}}
+								@php $img = $p->image_url ?? $p->image ?? null; @endphp
+								@if($img)
+									<img src="{{ asset('images/products/' . ($p->category->category_name ?? 'default') . '/' . $img) }}" alt="{{ $p->name ?? $p->title ?? 'product' }}" class="object-cover w-full h-full">
+								@endif
 							@else
 								<div class="w-full h-full bg-gray-300"></div>
 							@endif
@@ -33,7 +38,7 @@
 
 					<!-- details -->
 					<div class="pt-2">
-						<div class="text-lg font-semibold text-gray-800">{{ $item['product']['title'] ?? ($item->product->title ?? 'Product Title') }}</div>
+						<div class="text-lg font-semibold text-gray-800">{{ $item['product']['title'] ?? ($item->product->title ?? ($item->product->name ?? 'Product Title')) }}</div>
 						<div class="text-sm text-gray-500 mt-1">{{ $item['product']['description'] ?? ($item->product->description ?? 'some product detail here') }}</div>
 						<div class="text-gray-700 mt-4">{{ number_format($item['product']['price'] ?? ($item->product->price ?? 0), 0, '.', ',') }} baht</div>
 					</div>
