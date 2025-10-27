@@ -26,14 +26,57 @@
                         @endif
                     </div>
 
-                    <!-- แถบเลือกจำนวน -->
-                    <form method="POST" action="{{ route('products.addToCart', $product->id) }}" class="flex justify-end items-center mb-6">
+                    <!-- แถบเลือกจำนวน แบบ [-][ปริมาณ][+] -->
+                    <style>
+                        /* hide native number input spinners so only our -/+ buttons remain visible */
+                        input[type=number]::-webkit-outer-spin-button,
+                        input[type=number]::-webkit-inner-spin-button {
+                            -webkit-appearance: none;
+                            margin: 0;
+                        }
+                        input[type=number] { -moz-appearance: textfield; }
+                    </style>
+                    <form method="POST" action="{{ route('products.addToCart', $product->id) }}" class="flex justify-end items-center mb-6" id="add-to-cart-form">
                         @csrf
-                        <input type="number" id="quantity" name="quantity" value="1" min="1" max="{{ $product->in_stock }}" class="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mr-4" @if($product->in_stock == 0) disabled @endif>
-                        <button type="submit" @if($product->in_stock == 0) disabled class="bg-blue-500 text-white font-bold py-3 px-6 rounded-lg opacity-50 cursor-not-allowed" @else class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg" @endif>
+                        <div class="inline-flex items-center border border-black rounded-md overflow-hidden mr-4" role="group" aria-label="Quantity selector">
+                            <button type="button" class="qty-decrement h-10 px-3 bg-gray-50 hover:bg-gray-100 text-lg text-gray-700 leading-none" id="qty-decrement" aria-label="Decrease quantity" @if($product->in_stock == 0) disabled @endif>−</button>
+                            <input type="number" id="quantity" name="quantity" value="1" min="1" max="{{ $product->in_stock }}" data-min="1" data-max="{{ $product->in_stock }}" class="h-10 w-16 text-center px-2 border-l border-r border-black focus:outline-none" @if($product->in_stock == 0) disabled @endif>
+                            <button type="button" class="qty-increment h-10 px-3 bg-gray-50 hover:bg-gray-100 text-lg text-gray-700 leading-none" id="qty-increment" aria-label="Increase quantity" @if($product->in_stock == 0) disabled @endif>+</button>
+                        </div>
+                        <button type="submit" id="add-to-cart-btn" @if($product->in_stock == 0) disabled class="bg-blue-500 text-white font-bold py-3 px-6 rounded-lg opacity-50 cursor-not-allowed" @else class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg" @endif>
                             Add to Cart
                         </button>
                     </form>
+
+                    <script>
+                        (function(){
+                            var qtyInput = document.getElementById('quantity');
+                            var dec = document.getElementById('qty-decrement');
+                            var inc = document.getElementById('qty-increment');
+                            if (! qtyInput) return;
+                            var min = parseInt(qtyInput.getAttribute('data-min') || 1, 10);
+                            var max = parseInt(qtyInput.getAttribute('data-max') || 9999, 10);
+
+                            function clamp(v){ v = parseInt(v, 10) || 0; if (v < min) return min; if (v > max) return max; return v; }
+
+                            function updateButtons(){
+                                var v = clamp(qtyInput.value);
+                                qtyInput.value = v;
+                                if (dec) dec.disabled = (v <= min);
+                                if (inc) inc.disabled = (v >= max);
+                            }
+
+                            if (dec) dec.addEventListener('click', function(e){ e.preventDefault(); qtyInput.value = clamp((parseInt(qtyInput.value,10)||0) - 1); updateButtons(); });
+                            if (inc) inc.addEventListener('click', function(e){ e.preventDefault(); qtyInput.value = clamp((parseInt(qtyInput.value,10)||0) + 1); updateButtons(); });
+
+                            // allow manual input but validate on blur / change
+                            qtyInput.addEventListener('change', updateButtons);
+                            qtyInput.addEventListener('blur', updateButtons);
+
+                            // initialize
+                            updateButtons();
+                        })();
+                    </script>
 
                     <!-- Pop-up messages (simple alert or nicer toast) -->
                     <script>
