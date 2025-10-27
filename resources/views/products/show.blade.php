@@ -1,13 +1,9 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Product Details') }}
-        </h2>
-    </x-slot>
+    
 
-    <div class="py-12">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+    <div class="py-12 bg-white">
+        <div class="bg-white max-w-4xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white ">
                 <div class="p-6">
                     <!-- image -->
                         @if($product->image_url && $product->category)
@@ -24,7 +20,7 @@
                         <p class="text-gray-700 mb-4">{{ $product->description }}</p>
                         <p class="text-gray-700 mb-4">in stock: {{ $product->in_stock }}</p>
                         @if($product->in_stock > 0)
-                            <p class="text-3xl font-semibold text-green-600">฿{{ $product->price }}</p>
+                            <p class="text-3xl font-semibold text-green-600">{{ $product->price }} bath</p>
                         @else
                             <p class="text-3xl font-semibold text-red-600">Out of stock</p>
                         @endif
