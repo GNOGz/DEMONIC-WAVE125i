@@ -61,13 +61,16 @@
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-4">
                                     <div class="w-16 h-16 bg-gray-200 rounded overflow-hidden">
-                                        @if($item->product->image)
-                                            <img 
-                                                src="{{ asset('images/products/' . ($item->product->category->category_name ?? 'default') . '/' . $item->product->image) }}" 
-                                                alt="{{ $item->product->name }}" 
-                                                class="w-full h-full object-cover"
-                                            >
-                                        @endif
+                                        @php $p = $item->product ?? null; @endphp
+							    @if($p && (isset($p->image_url) || isset($p->image)))
+								{{-- prefer image_url or image property depending on your model --}}
+								@php $img = $p->image_url ?? $p->image ?? null; @endphp
+								@if($img)
+									<img src="{{ asset('images/products/' . ($p->category->category_name ?? 'default') . '/' . $img) }}" alt="{{ $p->name ?? $p->title ?? 'product' }}" class="object-cover w-full h-full">
+								@endif
+							@else
+								<div class="w-full h-full bg-gray-300"></div>
+							@endif
                                     </div>
                                     <div>
                                         <h4 class="font-medium text-gray-800">{{ $item->product->name }}</h4>
