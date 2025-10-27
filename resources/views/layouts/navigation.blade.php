@@ -1,6 +1,6 @@
 <nav x-data="{ open: false }" class="bg-white border-b border-white">
     <!-- Primary Navigation Menu -->
-    <div id="entire navbar" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20">
+    <div id="entire navbar" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 mb-6">
         <div id="Dropdown and Webname" class="flex justify-center items-center gap-6 w-full">
             <h2 class="text-[#1100FF] text-5xl font-bold">DEMONIC WAVE 125i</h2>
             <!-- Settings Dropdown -->
