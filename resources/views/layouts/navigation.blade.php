@@ -1,4 +1,4 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-whitre">
+<nav x-data="{ open: false }" class="bg-white border-b border-white">
     <!-- Primary Navigation Menu -->
     <div id="entire navbar" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20">
         <div id="Dropdown and Webname" class="flex justify-center items-center gap-6 w-full">
