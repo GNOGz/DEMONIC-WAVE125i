@@ -49,7 +49,7 @@
 					<div class="flex flex-col items-end pt-2">
 						<div class="flex items-center gap-2 bg-white border rounded-full px-2 py-1">
 							<button type="button" class="decrease inline-flex items-center justify-center w-7 h-7 text-gray-600" data-id="{{ $item['id'] ?? $item->id ?? '' }}">−</button>
-							<input type="text" readonly class="qty w-12 text-center bg-transparent text-sm" value="{{ $item['quantity'] ?? ($item->quantity ?? 1) }}" data-id="{{ $item['id'] ?? $item->id ?? '' }}">
+							<input type="number" min="1" class="qty w-16 text-center bg-transparent text-sm" value="{{ $item['quantity'] ?? ($item->quantity ?? 1) }}" data-id="{{ $item['id'] ?? $item->id ?? '' }}">
 							<button type="button" class="increase inline-flex items-center justify-center w-7 h-7 text-gray-600" data-id="{{ $item['id'] ?? $item->id ?? '' }}">+</button>
 						</div>
 
@@ -213,23 +213,11 @@ document.addEventListener('DOMContentLoaded', function(){
 			if(!input) return;
 			let v = parseInt(input.value || '0', 10);
 			v = isNaN(v) ? 1 : v + 1;
-			// optimistically update UI
+			// update UI only; quantity will be sent on checkout
 			input.value = v;
+			// ensure other listeners react (e.g., input event handlers)
+			try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch(e) { /* ignore */ }
 			calculateSubtotal();
-			// persist
-			persistQuantity(id, v)
-			.then(response => {
-				if (response.status === 'success') {
-					calculateSubtotal();
-				} else {
-					throw new Error('Update failed');
-				}
-			})
-			.catch(err => {
-				console.error(err);
-				alert('Could not update quantity on server');
-				window.location.reload();
-			});
 		});
 	});
 
@@ -242,25 +230,39 @@ document.addEventListener('DOMContentLoaded', function(){
 			let v = parseInt(input.value || '0', 10);
 			v = isNaN(v) ? 1 : Math.max(1, v - 1);
 			input.value = v;
+			try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch(e) {}
 			calculateSubtotal();
-			persistQuantity(id, v).catch(err => {
-				console.error(err);
-				alert('Could not update quantity on server');
-				window.location.reload();
-			});
 		});
 	});
 
-	// Handle checkout form submission
+	// Listen for manual changes to qty inputs and recalculate
+	document.querySelectorAll('.qty').forEach(input => {
+		input.addEventListener('input', function(){
+			let v = parseInt(this.value || '0', 10);
+			if (isNaN(v) || v < 1) v = 1;
+			this.value = v;
+			calculateSubtotal();
+		});
+	});
+
+	// Handle checkout form submission: collect selected items and quantities from the frontend
 	const checkoutForm = document.querySelector('form[action*="checkout"]');
 	if(checkoutForm){
 		checkoutForm.addEventListener('submit', function(e){
-			const hasSelectedItems = Array.from(document.querySelectorAll('.cart-checkbox')).some(cb => cb.checked);
-			if(!hasSelectedItems){
+			const selectedItems = [];
+			document.querySelectorAll('.cart-checkbox:checked').forEach(cb => {
+				const id = cb.dataset.id;
+				const qtyEl = document.querySelector(`.qty[data-id="${id}"]`);
+				const qty = qtyEl ? parseInt(qtyEl.value || '0', 10) : 0;
+				selectedItems.push({ id: id, quantity: qty });
+			});
+			if(selectedItems.length === 0){
 				e.preventDefault();
 				alert('Please select at least one item to checkout');
 				return;
 			}
+			// Put JSON payload in hidden input so server can use frontend quantities
+			document.getElementById('selected_items').value = JSON.stringify(selectedItems);
 		});
 	}
 

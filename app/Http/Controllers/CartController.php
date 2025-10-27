@@ -186,26 +186,34 @@ class CartController extends Controller
     public function checkout(Request $request)
     {
         $user = Auth::user();
-        
-        // Get all cart items that are selected (is_selected = 1)
-        $cartItems = $user->cart()->with('product')->where('is_selected', 1)->get();
-        
+        // If frontend sent selected_items JSON (with quantities), prefer that
+        $selectedItemsPayload = json_decode($request->input('selected_items', '[]'), true);
+
+        if (!empty($selectedItemsPayload) && is_array($selectedItemsPayload)) {
+            // Map payload items (id + quantity) to actual cart items with products
+            $cartItems = collect($selectedItemsPayload)->map(function($item) use ($user) {
+                $cartItem = $user->cart()->with('product')->find($item['id'] ?? null);
+                if ($cartItem) {
+                    $cartItem->checkout_quantity = intval($item['quantity'] ?? $cartItem->quantity);
+                }
+                return $cartItem;
+            })->filter();
+        } else {
+            // Fallback: use DB-selected items
+            $cartItems = $user->cart()->with('product')->where('is_selected', 1)->get();
+            // Set checkout quantity same as cart quantity for selected items
+            $cartItems->each(function($item) {
+                $item->checkout_quantity = $item->quantity;
+            });
+        }
+
         if ($cartItems->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Please select items to checkout');
         }
 
-        // Set checkout quantity same as cart quantity for selected items
-        $cartItems->each(function($item) {
-            $item->checkout_quantity = $item->quantity;
-        });
-
-        if ($cartItems->isEmpty()) {
-            return redirect()->route('cart.index')->with('error', 'No valid items found');
-        }
-
         // Calculate totals
         $subtotal = $cartItems->sum(function($item) {
-            return $item->product->price * $item->checkout_quantity;
+            return $item->product->price * ($item->checkout_quantity ?? $item->quantity);
         });
         $shipping = 50;
         $total = $subtotal + $shipping;
