@@ -1,10 +1,10 @@
 <x-app-layout>
     
 
-    <div class="py-12 bg-white">
+    <div class="bg-white">
         <div class="bg-white max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white ">
-                <div class="p-6">
+                <div class="px-6">
                     <!-- image -->
                         @if($product->image_url && $product->category)
                             <div class="flex justify-center mb-6">
