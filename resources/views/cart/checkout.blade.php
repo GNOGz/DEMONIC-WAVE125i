@@ -1,14 +1,6 @@
 <x-app-layout>
     <div class="min-h-screen bg-white py-12">
         <div class="max-w-5xl mx-auto px-6">
-            <!-- Header -->
-            <div class="flex justify-between items-center mb-8">
-                <h1 class="text-2xl font-semibold text-blue-600">DEMONIC WAVE125i</h1>
-                <div class="flex items-center">
-                    <span class="text-gray-600">{{ $user->email }}</span>
-                    <img src="{{ $user->profile_photo_url ?? asset('images/default-avatar.png') }}" alt="Profile" class="w-8 h-8 rounded-full ml-2">
-                </div>
-            </div>
 
             <!-- Main Content -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">

@@ -9,6 +9,34 @@ use App\Models\Product;
 
 class CartController extends Controller
 {
+    public function updateQuantity(Request $request, $cartId)
+    {
+        $request->validate([
+            'action' => 'required|in:increment,decrement'
+        ]);
+        
+        $user = Auth::user();
+        $cartItem = $user->cart()->findOrFail($cartId);
+        
+        if ($request->action === 'increment') {
+            $cartItem->quantity += 1;
+        } else {
+            $cartItem->quantity = max(1, $cartItem->quantity - 1);
+        }
+        
+        $cartItem->save();
+        
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'quantity' => $cartItem->quantity,
+                'subtotal' => $cartItem->quantity * $cartItem->product->price
+            ]);
+        }
+        
+        return back();
+    }
+
     public function index()
     {
         $user = Auth::user();

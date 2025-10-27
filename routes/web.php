@@ -21,6 +21,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/products/{id}/wishlist', [ProductController::class, 'addToWishlist'])->name('products.addToWishlist'); 
     Route::patch('/cart/select-all', [CartController::class, 'updateAllSelection'])->name('cart.selectAll');
     Route::patch('/cart/{id}/select', [CartController::class, 'updateSelection'])->name('cart.select');
+    Route::post('/cart/{id}/quantity', [CartController::class, 'updateQuantity'])->name('cart.updateQuantity');
     Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
     Route::post('/cart/payment', [CartController::class, 'processPayment'])->name('cart.payment');
     Route::patch('/profile/photo/update', [UserController::class, 'updateProfilePhoto'])->name('profile.photo.update');
