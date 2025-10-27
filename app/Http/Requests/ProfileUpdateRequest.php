@@ -27,6 +27,11 @@ class ProfileUpdateRequest extends FormRequest
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
             'phone_number' =>['required', 'regex:/^[0-9]{10}$/'],
+            'postal_code' =>['required','string','regex:/^[0-9]{5}$/'],
+            'distric' =>['required','string','max:255'],
+            'province' =>['required', 'string', 'max:255'],
+            'detail' =>['required', 'string', 'max:255'],
+            'country' =>['required','string','max:255'],
         ];
     }
 }

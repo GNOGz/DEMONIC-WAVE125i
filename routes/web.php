@@ -4,7 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\UserController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -20,6 +20,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/products/{id}/add-to-cart', [ProductController::class, 'addToCart'])->name('products.addToCart');
     Route::post('/products/{id}/wishlist', [ProductController::class, 'addToWishlist'])->name('products.addToWishlist'); 
     Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+    Route::patch('/profile/photo/update', [UserController::class, 'updateProfilePhoto'])->name('profile.photo.update');
+    Route::get('/profile/photo/{filename}', [UserController::class, 'showProfilePhoto'])->where('filename', '.*')->name('user.photo');
+
 });
 Route::resource('cart', CartController::class);
 Route::get('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
