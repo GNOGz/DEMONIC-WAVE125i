@@ -12,7 +12,7 @@
                     <!-- image -->
                         @if($product->image_url && $product->category)
                             <div class="flex justify-center mb-6">
-                                <div class="w-64 h-64 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                                <div class="w-80 h-100 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
                                     <img src="{{ asset('images/products/' . $product->category->category_name . '/' . $product->image_url) }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
                                 </div>
                             </div>

@@ -12,24 +12,32 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         @foreach($products as $product)
                             <div class="border rounded-lg p-4 relative flex flex-col h-full">
+                          <!-- Make the whole card clickable by placing a focusable overlay link.
+                              This is a real link (not aria-hidden) so keyboard users can tab to the card.
+                              We give it an accessible label and visible focus styles. The wishlist
+                              button keeps a higher z-index so it remains clickable with the mouse. -->
+                          <!-- Overlay sits above the content so clicks on any non-interactive area of the card
+                              navigate to the product page. The wishlist button keeps z-20 so it remains clickable. -->
+                          <a href="{{ route('products.show', $product->id) }}" class="absolute inset-0 z-10 focus:z-30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" tabindex="0" aria-label="View details for {{ $product->name }}"></a>
                                 @if($product->image_url && $product->category)
                                     <img src="{{ asset('images/products/' . $product->category->category_name . '/' . $product->image_url) }}" alt="{{ $product->name }}" class="w-full h-48 object-cover mb-4 rounded">
                                 @endif
 
-                                <div class="flex-1 flex flex-col">
+                                <!-- Content lowered below the overlay so the overlay receives clicks. -->
+                                <div class="flex-1 flex flex-col relative">
                                     <h4 class="font-bold text-lg mb-2 h-12 overflow-hidden">{{ $product->name }}</h4>
-                                    @if($product->in_stock > 0)
-                                        <p class="text-green-600 font-semibold text-xl">฿{{ $product->price }}</p>
-                                    @else
-                                        <p class="text-red-600 font-semibold text-xl">Out of stock</p>
-                                    @endif
+                                    <div class="flex items-center justify-between mt-2">
+                                        @if($product->in_stock > 0)
+                                            <p class="text-green-600 font-semibold text-xl">฿{{ $product->price }}</p>
+                                        @else
+                                            <p class="text-red-600 font-semibold text-xl">Out of stock</p>
+                                        @endif
 
-                                    <div class="mt-auto flex justify-between items-center">
-                                        <a href="{{ route('products.show', $product->id) }}" class="text-blue-500">View Details</a>
                                         @php
                                             $isWished = isset($wishlistIds) && in_array($product->id, $wishlistIds);
                                         @endphp
-                                        <button type="button" class="wishlist-btn inline-flex items-center justify-center w-10 h-10 focus:outline-none border border-gray-300 rounded-full bg-white hover:bg-pink-50 transition-colors duration-150" data-id="{{ $product->id }}" aria-label="Toggle wishlist" aria-pressed="{{ $isWished ? 'true' : 'false' }}">
+                                        <!-- Wishlist button sits to the right of the price and remains above the link overlay. -->
+                                        <button type="button" class="wishlist-btn z-20 inline-flex items-center justify-center w-10 h-10 focus:outline-none border border-gray-300 rounded-full bg-white hover:bg-pink-50 transition-colors duration-150" data-id="{{ $product->id }}" aria-label="Toggle wishlist" aria-pressed="{{ $isWished ? 'true' : 'false' }}">
                                             <span class="heart-icon text-2xl @if($isWished) text-pink-500 @else text-gray-400 @endif">♥</span>
                                         </button>
                                     </div>
