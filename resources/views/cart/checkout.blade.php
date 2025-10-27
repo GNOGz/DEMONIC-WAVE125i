@@ -1,92 +1,118 @@
 <x-app-layout>
-    
     <div class="min-h-screen bg-white py-12">
         <div class="max-w-5xl mx-auto px-6">
             <!-- Header -->
-            <header class="text-center mb-8">
-                <h1 class="text-4xl font-extrabold text-blue-800">DEMONIC WAVE125i</h1>
-                <h2 class="text-2xl font-semibold mt-4">Check Out</h2>
-            </header>
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl font-semibold text-blue-600">DEMONIC WAVE125i</h1>
+                <div class="flex items-center">
+                    <span class="text-gray-600">{{ $user->email }}</span>
+                    <img src="{{ $user->profile_photo_url ?? asset('images/default-avatar.png') }}" alt="Profile" class="w-8 h-8 rounded-full ml-2">
+                </div>
+            </div>
 
-            <!-- Address Section -->
-            <section class="mb-8">
-                <h3 class="text-lg font-semibold mb-4">Address</h3>
-                <textarea
-                    class="w-full p-4 border rounded-lg min-h-[100px]"
-                    name="address"
-                    placeholder="Enter your delivery address..."
-                >{{ $user->address->full_address ?? '' }}</textarea>
-            </section>
+            <!-- Main Content -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Left Column -->
+                <div class="space-y-6">
+                    <h2 class="text-lg font-semibold text-gray-900">Check Out</h2>
+                    
+                    <!-- Address -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                        <textarea 
+                            name="shipping_address" 
+                            id="shipping_address"
+                            rows="4" 
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        >{{ $address->address_line ?? '' }}</textarea>
+                    </div>
 
-            <!-- Order Summary -->
-            <section class="space-y-6">
-                @foreach($selectedItems ?? [] as $item)
-                    <div class="flex gap-6 border-b pb-6">
-                        <!-- Product Image -->
-                        <div class="w-28">
-                            <div class="w-28 h-20 bg-gray-200 rounded-md overflow-hidden">
-                                @if($item->product->image)
-                                    <img src="{{ $item->product->image }}" alt="{{ $item->product->title }}" class="w-full h-full object-cover">
-                                @endif
+                    <!-- Shipping -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Shipping</label>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Order Total</span>
+                                <span class="text-sm font-medium">{{ number_format($subtotal, 0, '.', ',') }} baht</span>
+                            </div>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="text-sm text-gray-600">Shipping Fee</span>
+                                <span class="text-sm font-medium">{{ number_format($shipping, 0, '.', ',') }} baht</span>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Product Details -->
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-gray-800">{{ $item->product->title }}</h4>
-                            <p class="text-sm text-gray-500">{{ $item->product->description }}</p>
-                            <div class="mt-2 flex justify-between items-center">
-                                <div class="text-gray-700">{{ number_format($item->product->price, 0, '.', ',') }} baht</div>
-                                <div class="text-sm text-gray-600">× {{ $item->quantity }}</div>
-                            </div>
+                    <!-- Payment Method -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Payment</label>
+                        <div class="bg-gray-50 rounded-lg p-4 flex items-center justify-center">
+                            <span class="text-sm text-gray-600">QR code</span>
                         </div>
                     </div>
-                @endforeach
-
-                <!-- Totals -->
-                <div class="border-t pt-6">
-                    <div class="flex justify-between text-sm mb-2">
-                        <span>Shipping</span>
-                        <span>{{ number_format($shipping ?? 50, 0) }} baht</span>
-                    </div>
-                    <div class="flex justify-between text-lg font-semibold">
-                        <span>Order Total</span>
-                        <span>{{ number_format($total ?? 550, 0) }} baht</span>
-                    </div>
                 </div>
-            </section>
 
-            <!-- Payment Section -->
-            <section class="mt-8">
-                <h3 class="text-lg font-semibold mb-4">Payment : QR code</h3>
-                <div class="bg-gray-100 rounded-lg p-8 flex justify-center">
-                    <!-- Placeholder for QR code -->
-                    <div class="w-48 h-48 bg-white rounded-lg flex items-center justify-center text-gray-400">
-                        QR Code
+                <!-- Right Column -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Order Summary</h3>
+                    
+                    <!-- Cart Items -->
+                    <div class="space-y-4 mb-6">
+                        @foreach($cartItems as $item)
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-16 h-16 bg-gray-200 rounded overflow-hidden">
+                                        @if($item->product->image)
+                                            <img 
+                                                src="{{ asset('images/products/' . ($item->product->category->category_name ?? 'default') . '/' . $item->product->image) }}" 
+                                                alt="{{ $item->product->name }}" 
+                                                class="w-full h-full object-cover"
+                                            >
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-800">{{ $item->product->name }}</h4>
+                                        <p class="text-sm text-gray-500">Quantity: {{ $item->quantity }}</p>
+                                    </div>
+                                </div>
+                                <span class="font-medium">{{ number_format($item->product->price * $item->quantity, 0, '.', ',') }} baht</span>
+                            </div>
+                        @endforeach
                     </div>
-                </div>
-            </section>
 
-            <!-- Checkout Button -->
-            <div class="mt-8 text-center">
-                <form action="{{ route('orders.store') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="shipping_address" id="shipping_address">
-                    <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-md inline-block">
-                        Check Out
-                    </button>
-                </form>
+                    <!-- Total -->
+                    <div class="border-t pt-4">
+                        <div class="flex justify-between items-center text-lg font-semibold">
+                            <span>Total</span>
+                            <span>{{ number_format($total, 0, '.', ',') }} baht</span>
+                        </div>
+                    </div>
+
+                    <!-- Checkout Button -->
+                    <form action="{{ route('cart.payment') }}" method="POST" class="mt-6">
+                        @csrf
+                        <button type="submit" class="w-full bg-blue-600 text-white rounded-lg py-3 hover:bg-blue-700 transition-colors">
+                            Check Out
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
     @push('scripts')
     <script>
-        // Update hidden shipping address field before form submission
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const addressText = document.querySelector('textarea[name="address"]').value;
-            document.getElementById('shipping_address').value = addressText;
+        // Add any needed JavaScript here
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const addressField = document.getElementById('shipping_address');
+
+            form.addEventListener('submit', function(e) {
+                if (!addressField.value.trim()) {
+                    e.preventDefault();
+                    alert('Please enter your shipping address');
+                }
+            });
         });
     </script>
-    @endpush
+    @endpush>
 </x-app-layout>

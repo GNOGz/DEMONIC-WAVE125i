@@ -17,7 +17,9 @@
 				<div class="grid grid-cols-[40px_120px_1fr_120px] items-start gap-6 border-b pb-6">
 					<!-- checkbox -->
 					<div class="pt-6">
-						<input type="checkbox" class="cart-checkbox h-5 w-5 rounded border-gray-300" data-id="{{ $item['id'] ?? $item->id ?? '' }}">
+						<input type="checkbox" class="cart-checkbox h-5 w-5 rounded border-gray-300" 
+							data-id="{{ $item['id'] ?? $item->id ?? '' }}"
+							{{ ($item['is_selected'] ?? $item->is_selected ?? 0) == 1 ? 'checked' : '' }}>
 					</div>
 
 					<!-- image -->
@@ -93,21 +95,55 @@ document.addEventListener('DOMContentLoaded', function(){
 		return parseInt(n || '0', 10);
 	}
 
-	// Calculate subtotal from checked items
+	// Calculate subtotal only from items where is_selected = 1
 	function calculateSubtotal(){
 		let total = 0;
-		document.querySelectorAll('.cart-checkbox:checked').forEach(cb => {
-			const id = cb.dataset.id;
-			const qtyEl = document.querySelector(`.qty[data-id="${id}"]`);
-			const priceEl = cb.closest('.grid').querySelector('.text-gray-700');
-			const qty = qtyEl ? parseInt(qtyEl.value || '0', 10) : 0;
-			const price = parsePriceFromElement(priceEl);
-			total += qty * price;
+		document.querySelectorAll('.cart-checkbox').forEach(cb => {
+			if (cb.checked) {  // Only include if checkbox is checked (is_selected = 1)
+				const id = cb.dataset.id;
+				const qtyEl = document.querySelector(`.qty[data-id="${id}"]`);
+				const priceEl = cb.closest('.grid').querySelector('.text-gray-700');
+				const qty = qtyEl ? parseInt(qtyEl.value || '0', 10) : 0;
+				const price = parsePriceFromElement(priceEl);
+				total += qty * price;
+			}
 		});
 		// Update subtotal display inside footer (first .text-sm.text-gray-600 in footer)
 		const subtotalEl = document.querySelector('footer .text-sm.text-gray-600');
 		if(subtotalEl) subtotalEl.textContent = total.toLocaleString() + ' baht';
 		return total;
+	}
+
+	// Function to update cart item selection in database
+	function updateCartItemSelection(cartId, isSelected) {
+		return fetch(`/cart/${cartId}/select`, {
+			method: 'PATCH',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+				'Accept': 'application/json'
+			},
+			body: JSON.stringify({ is_selected: isSelected ? 1 : 0 })
+		}).then(res => {
+			if(!res.ok) throw new Error('Network response was not ok');
+			return res.json();
+		});
+	}
+
+	// Function to update all cart items selection
+	function updateAllCartItemsSelection(isSelected) {
+		return fetch('/cart/select-all', {
+			method: 'PATCH',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+				'Accept': 'application/json'
+			},
+			body: JSON.stringify({ is_selected: isSelected ? 1 : 0 })
+		}).then(res => {
+			if(!res.ok) throw new Error('Network response was not ok');
+			return res.json();
+		});
 	}
 
 	// Select all handling
@@ -117,34 +153,51 @@ document.addEventListener('DOMContentLoaded', function(){
 	if(selectAll){
 		selectAll.addEventListener('change', function(){
 			const checked = this.checked;
-			checkboxes.forEach(cb => cb.checked = checked);
-			calculateSubtotal();
+			updateAllCartItemsSelection(checked)
+				.then(() => {
+					checkboxes.forEach(cb => cb.checked = checked);
+					calculateSubtotal();
+				})
+				.catch(err => {
+					console.error(err);
+					alert('Could not update selection status');
+					window.location.reload();
+				});
 		});
 	}
 
 	// Update subtotal when checkboxes change
 	checkboxes.forEach(cb => cb.addEventListener('change', function(){
-		// keep selectAll in sync
-		if(selectAll){
-			selectAll.checked = checkboxes.length > 0 && checkboxes.every(c => c.checked);
-		}
-		calculateSubtotal();
+		const cartId = this.dataset.id;
+		const checked = this.checked;
+		
+		updateCartItemSelection(cartId, checked)
+			.then(() => {
+				// keep selectAll in sync
+				if(selectAll){
+					selectAll.checked = checkboxes.length > 0 && checkboxes.every(c => c.checked);
+				}
+				calculateSubtotal();
+			})
+			.catch(err => {
+				console.error(err);
+				alert('Could not update selection status');
+				this.checked = !checked; // revert checkbox state
+				calculateSubtotal();
+			});
 	}));
 
 	// Increase / decrease handlers
 	// When quantity is changed via + / - buttons, update DB via PATCH /cart/{id}
-	const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
 	function persistQuantity(cartId, quantity){
 		// send PATCH request to /cart/{id}
 		return fetch(`/cart/${cartId}`, {
 			method: 'PATCH',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-CSRF-TOKEN': csrfToken,
+				'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
 				'Accept': 'application/json'
 			},
-			credentials: 'same-origin',
 			body: JSON.stringify({ quantity: quantity })
 		}).then(res => {
 			if(!res.ok) throw new Error('Network response was not ok');
@@ -164,11 +217,17 @@ document.addEventListener('DOMContentLoaded', function(){
 			input.value = v;
 			calculateSubtotal();
 			// persist
-			persistQuantity(id, v).catch(err => {
-				// revert UI if error
+			persistQuantity(id, v)
+			.then(response => {
+				if (response.status === 'success') {
+					calculateSubtotal();
+				} else {
+					throw new Error('Update failed');
+				}
+			})
+			.catch(err => {
 				console.error(err);
 				alert('Could not update quantity on server');
-				// try to reload to consistent state
 				window.location.reload();
 			});
 		});
@@ -192,22 +251,16 @@ document.addEventListener('DOMContentLoaded', function(){
 		});
 	});
 
-	// Handle checkout form submission, collect selected items and their current quantities
+	// Handle checkout form submission
 	const checkoutForm = document.querySelector('form[action*="checkout"]');
 	if(checkoutForm){
 		checkoutForm.addEventListener('submit', function(e){
-			const selectedItems = [];
-			document.querySelectorAll('.cart-checkbox:checked').forEach(cb => {
-				const id = cb.dataset.id;
-				const qty = document.querySelector(`.qty[data-id="${id}"]`).value;
-				selectedItems.push({ id, quantity: qty });
-			});
-			if(selectedItems.length === 0){
+			const hasSelectedItems = Array.from(document.querySelectorAll('.cart-checkbox')).some(cb => cb.checked);
+			if(!hasSelectedItems){
 				e.preventDefault();
 				alert('Please select at least one item to checkout');
 				return;
 			}
-			document.getElementById('selected_items').value = JSON.stringify(selectedItems);
 		});
 	}
 
