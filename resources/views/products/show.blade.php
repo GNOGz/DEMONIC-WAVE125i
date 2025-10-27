@@ -16,13 +16,13 @@
 
                     <!-- block detail -->
                     <div class="border-t-2 border-b-2 border-gray-300 py-6 mb-6">
-                        <h3 class="text-2xl font-bold mb-4">{{ $product->name }}</h3>
-                        <p class="text-gray-700 mb-4">{{ $product->description }}</p>
-                        <p class="text-gray-700 mb-4">in stock: {{ $product->in_stock }}</p>
+                        <h3 class="text-xl  mb-4">{{ $product->name }}</h3>
+                        <p class="text-base mb-4">{{ $product->description }}</p>
+                        <p class="text-base mb-4">in stock : {{ $product->in_stock }}</p>
                         @if($product->in_stock > 0)
-                            <p class="text-3xl font-semibold text-green-600">{{ $product->price }} bath</p>
+                            <p class="text-xl font-semibold text-green-600">Price : {{ $product->price }} bath</p>
                         @else
-                            <p class="text-3xl font-semibold text-red-600">Out of stock</p>
+                            <p class="text-xl font-semibold text-red-600">Out of stock</p>
                         @endif
                     </div>
 
@@ -38,12 +38,14 @@
                     </style>
                     <form method="POST" action="{{ route('products.addToCart', $product->id) }}" class="flex justify-end items-center mb-6" id="add-to-cart-form">
                         @csrf
-                        <div class="inline-flex items-center border border-black rounded-md overflow-hidden mr-4" role="group" aria-label="Quantity selector">
-                            <button type="button" class="qty-decrement h-10 px-3 bg-gray-50 hover:bg-gray-100 text-lg text-gray-700 leading-none" id="qty-decrement" aria-label="Decrease quantity" @if($product->in_stock == 0) disabled @endif>−</button>
-                            <input type="number" id="quantity" name="quantity" value="1" min="1" max="{{ $product->in_stock }}" data-min="1" data-max="{{ $product->in_stock }}" class="h-10 w-16 text-center px-2 border-l border-r border-black focus:outline-none" @if($product->in_stock == 0) disabled @endif>
-                            <button type="button" class="qty-increment h-10 px-3 bg-gray-50 hover:bg-gray-100 text-lg text-gray-700 leading-none" id="qty-increment" aria-label="Increase quantity" @if($product->in_stock == 0) disabled @endif>+</button>
+                        <!-- scaled down to 75% to reduce overall visual size; increased border thickness and maximum roundness -->
+                        <div class="inline-flex items-center border-2 border-black rounded-lg  overflow-hidden mr-4 transform scale-75 origin-center" role="group" aria-label="Quantity selector">
+                            <button type="button" class="qty-decrement h-10 px-3 bg-gray-50 hover:bg-gray-100 text-2xl text-black leading-none border-r-2 border-black " id="qty-decrement" aria-label="Decrease quantity" @if($product->in_stock == 0) disabled @endif>−</button>
+                            <!-- input has no border; use button borders as internal dividers -->
+                            <input type="number" id="quantity" name="quantity" value="1" min="1" max="{{ $product->in_stock }}" data-min="1" data-max="{{ $product->in_stock }}" class="h-10 w-16 text-center px-2 bg-white focus:outline-none" @if($product->in_stock == 0) disabled @endif>
+                            <button type="button" class="qty-increment h-10 px-3 bg-gray-50 hover:bg-gray-100 text-2xl text-black leading-none border-l-2 border-black  " id="qty-increment" aria-label="Increase quantity" @if($product->in_stock == 0) disabled @endif>+</button>
                         </div>
-                        <button type="submit" id="add-to-cart-btn" @if($product->in_stock == 0) disabled class="bg-blue-500 text-white font-bold py-3 px-6 rounded-lg opacity-50 cursor-not-allowed" @else class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg" @endif>
+                        <button type="submit" id="add-to-cart-btn" @if($product->in_stock == 0) disabled class="bg-[#1100FF] text-white font-bold py-3 px-6 rounded-lg opacity-50 cursor-not-allowed" @else class="bg-[#1100FF] text-white font-bold py-3 px-6 rounded-lg" @endif>
                             Add to Cart
                         </button>
                     </form>
@@ -66,14 +68,32 @@
                                 if (inc) inc.disabled = (v >= max);
                             }
 
-                            if (dec) dec.addEventListener('click', function(e){ e.preventDefault(); qtyInput.value = clamp((parseInt(qtyInput.value,10)||0) - 1); updateButtons(); });
-                            if (inc) inc.addEventListener('click', function(e){ e.preventDefault(); qtyInput.value = clamp((parseInt(qtyInput.value,10)||0) + 1); updateButtons(); });
+                            if (dec) dec.addEventListener('click', function(e){
+                                e.preventDefault();
+                                qtyInput.value = clamp((parseInt(qtyInput.value,10)||0) - 1);
+                                updateButtons();
+                            });
+                            if (inc) inc.addEventListener('click', function(e){
+                                e.preventDefault();
+                                // ensure we do not exceed available stock (max)
+                                var current = parseInt(qtyInput.value,10) || 0;
+                                if (current >= max) return; // prevent increment beyond stock
+                                qtyInput.value = clamp(current + 1);
+                                updateButtons();
+                            });
 
                             // allow manual input but validate on blur / change
                             qtyInput.addEventListener('change', updateButtons);
                             qtyInput.addEventListener('blur', updateButtons);
 
-                            // initialize
+                            // ensure value is valid before submit and initialize
+                            var form = document.getElementById('add-to-cart-form');
+                            if (form) {
+                                form.addEventListener('submit', function(e){
+                                    // clamp value to allowed range before submitting
+                                    qtyInput.value = clamp(qtyInput.value);
+                                });
+                            }
                             updateButtons();
                         })();
                     </script>

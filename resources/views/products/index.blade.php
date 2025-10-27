@@ -30,7 +30,7 @@
                                     @endif
 
                                     <div class="flex-1 flex flex-col">
-                                        <h4 class="font-bold text-lg mb-2 h-12 overflow-hidden">{{ $product->name }}</h4>
+                                        <h4 class="font-bold text-lx mb-2 h-12 overflow-hidden">{{ $product->name }}</h4>
                                         <div class="flex items-center justify-between mt-2">
                                             @if($product->in_stock > 0)
                                                 <p class="text-green-600 font-semibold text-xl">{{ $product->price }} bath</p>
