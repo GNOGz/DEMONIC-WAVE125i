@@ -56,27 +56,28 @@
         </div>
         <div id="phone-section">
             <x-input-label for="name" :value="__('Phone Number')" />
-            <x-text-input id="phone" name="phone_number" type="text" class="mt-1 block w-full"
-                :value="old('phone_number', $address->phone_number)" required autofocus autocomplete="phone_number" />
+            <x-text-input id="phone" name="phone_number" type="text" class="mt-1 block w-full"  placeholder="Enter your phone number"
+                :value="old('phone_number', $address?->phone_number ?? '')" required autofocus
+                autocomplete="phone_number" />
             <x-input-error class="mt-2" :messages="$errors->get('phone_number')" />
         </div>
         <div id="address-section" class="">
             <x-input-label for="Address" :value="__('Address')" />
-            <x-text-input id="address_detail" name="detail" type="text" class="mt-1 block w-full" :value="old('detail', $address->detail)" required autofocus autocomplete="detail" />
+            <x-text-input id="address_detail" name="detail" type="text"  placeholder="Detail" class="mt-1 block w-full" :value="old('detail', $address?->detail ?? '')" required autofocus autocomplete="detail" />
             <x-input-error class="mt-2" :messages="$errors->get('detail')" />
             <div class="flex flex-row justify-center items-center gap-3 mt-2">
-                <x-text-input id="address_district" name="distric" type="text" class="mt-1 block w-full max-w-[9.5rem]"
-                    :value="old('distric', $address->distric)" required autofocus autocomplete="distric" />
+                <x-text-input id="address_district" name="distric" type="text"  placeholder="District" class="mt-1 block w-full max-w-[9.5rem]"
+                    :value="old('distric', $address?->distric ?? '')" required autofocus autocomplete="distric" />
                 <x-input-error class="mt-2" :messages="$errors->get('distric')" />
-                <x-text-input id="address_province" name="province" type="text" class="mt-1 block w-full max-w-[9.5rem]"
-                    :value="old('province', $address->province)" required autofocus autocomplete="province" />
+                <x-text-input id="address_province" name="province" type="text" placeholder="Province" class="mt-1 block w-full max-w-[9.5rem]"
+                    :value="old('province', $address?->province ?? '')" required autofocus autocomplete="province" />
                 <x-input-error class="mt-2" :messages="$errors->get('province')" />
-                <x-text-input id="address_country" name="country" type="text" class="mt-1 block w-full max-w-[9.5rem]"
-                    :value="old('country', $address->country)" required autofocus autocomplete="country" />
+                <x-text-input id="address_country" name="country" type="text" placeholder="Country" class="mt-1 block w-full max-w-[9.5rem]"
+                    :value="old('country', $address?->country ?? '')" required autofocus autocomplete="country" />
                 <x-input-error class="mt-2" :messages="$errors->get('country')" />
-                <x-text-input id="address_postal_code" name="postal_code" type="text"
-                    class="mt-1 block w-full max-w-[9.5rem]" :value="old('postal_code', $address->postal_code)" required
-                    autofocus autocomplete="postal_code" />
+                <x-text-input id="address_postal_code" name="postal_code" type="text" placeholder="Postal Code"
+                    class="mt-1 block w-full max-w-[9.5rem]" :value="old('postal_code', $address?->postal_code ?? '')"
+                    required autofocus autocomplete="postal_code" />
                 <x-input-error class="mt-2" :messages="$errors->get('postal_code')" />
             </div>
         </div>
