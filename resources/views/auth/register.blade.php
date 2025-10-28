@@ -4,14 +4,14 @@
 
         <!-- FName -->
         <div>
-            <x-input-label for="fname" :value="__('fname')" />
+            <x-input-label for="fname" :value="__('First Name')" />
             <x-text-input id="fname" class="block mt-1 w-full" type="text" name="fname" :value="old('fname')" required
                 autofocus autocomplete="fname" />
             <x-input-error :messages="$errors->get('fname')" class="mt-2" />
         </div>
         <!-- LName -->
         <div>
-            <x-input-label for="lname" :value="__('lname')" />
+            <x-input-label for="lname" :value="__('Last Name')" />
             <x-text-input id="lname" class="block mt-1 w-full" type="text" name="lname" :value="old('lname')" required
                 autofocus autocomplete="lname" />
             <x-input-error :messages="$errors->get('lname')" class="mt-2" />
