@@ -5,12 +5,49 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Models\Product;
+use App\Models\Wishlist;
+use App\Models\Category;
+
 Route::get('/', function () {
     return view('welcome');
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    // Pick one random product id per category (collect ids only)
+    $selectedIds = [];
+    $categoryIds = Category::pluck('id');
+    foreach ($categoryIds as $catId) {
+        $prodId = Product::where('category_id', $catId)->inRandomOrder()->value('id');
+        if ($prodId) {
+            $selectedIds[$prodId] = $prodId; // use id as key to avoid duplicates
+        }
+    }
+
+    $recommendedIds = array_values($selectedIds);
+
+    // If fewer than 5 selected, fill with other random product ids (excluding already selected)
+    if (count($recommendedIds) < 5) {
+        $needed = 5 - count($recommendedIds);
+        $fillIds = Product::whereNotIn('id', $recommendedIds)->inRandomOrder()->take($needed)->pluck('id')->toArray();
+        $recommendedIds = array_merge($recommendedIds, $fillIds);
+    }
+
+    // If more than 5 (many categories), randomly pick 5 of them
+    if (count($recommendedIds) > 5) {
+        shuffle($recommendedIds);
+        $recommendedIds = array_slice($recommendedIds, 0, 5);
+    }
+
+    // Fetch Eloquent models with category relation loaded so we have an Eloquent collection
+    $recommended = Product::with('category')->whereIn('id', $recommendedIds)->get();
+
+    $wishlistIds = [];
+    if (auth()->check()) {
+        $wishlistIds = Wishlist::where('user_id', auth()->id())->pluck('product_id')->toArray();
+    }
+
+    return view('dashboard', ['recommendedProducts' => $recommended, 'wishlistIds' => $wishlistIds]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
