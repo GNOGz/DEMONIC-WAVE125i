@@ -5,6 +5,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WishlistController;
 use App\Models\Product;
 use App\Models\Category;
 
@@ -57,6 +58,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/cart/payment', [CartController::class, 'processPayment'])->name('cart.payment');
     Route::patch('/profile/photo/update', [UserController::class, 'updateProfilePhoto'])->name('profile.photo.update');
     Route::get('/profile/photo/{filename}', [UserController::class, 'showProfilePhoto'])->where('filename', '.*')->name('user.photo');
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
 
     // Cart resource routes
     Route::resource('cart', CartController::class);
