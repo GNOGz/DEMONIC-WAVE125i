@@ -8,6 +8,7 @@ use App\Models\Cart;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\OrderItem;
+use Illuminate\Support\Facades\DB;
 
 class CartController extends Controller
 {
@@ -16,13 +17,13 @@ class CartController extends Controller
         $request->validate([
             'action' => 'required|in:increment,decrement'
         ]);
-        
+
         $user = Auth::user();
         $cartItem = $user->cart()->findOrFail($cartId);
-        
+
         $product = $cartItem->product;
-        $newQuantity = $request->action === 'increment' ? 
-            $cartItem->quantity + 1 : 
+        $newQuantity = $request->action === 'increment' ?
+            $cartItem->quantity + 1 :
             max(1, $cartItem->quantity - 1);
 
         if ($request->action === 'increment' && !$product->hasAvailableStock($newQuantity)) {
@@ -37,28 +38,58 @@ class CartController extends Controller
 
         $cartItem->quantity = $newQuantity;
         $cartItem->save();
-        
+
         if ($request->wantsJson()) {
             return response()->json([
                 'status' => 'success',
                 'quantity' => $cartItem->quantity,
                 'subtotal' => $cartItem->quantity * $cartItem->product->price
             ]);
+        } else { // decrement
+            if ($cartItem->quantity <= 1) {
+                // ถ้ากดลดจาก 1 → 0 ให้ลบทิ้ง
+                $cartItemId = $cartItem->id;
+                $cartItem->delete();
+
+                $payload = [
+                    'status' => 'success',
+                    'removed' => true,
+                    'cart_item_id' => $cartItemId,
+                ];
+
+                if ($request->wantsJson()) {
+                    return response()->json($payload);
+                }
+                return back()->with('success', 'Item removed from cart.');
+            }
+
+            // ลดปกติ (ยังมากกว่า 1)
+            $cartItem->quantity = $cartItem->quantity - 1;
+            $cartItem->save();
+
+            $payload = [
+                'status' => 'success',
+                'removed' => false,
+                'quantity' => $cartItem->quantity,
+                'subtotal' => $cartItem->quantity * ($product->price ?? 0),
+            ];
         }
-        
+
+        if ($request->wantsJson()) {
+            return response()->json($payload);
+        }
         return back();
     }
-
     public function index()
     {
         $user = Auth::user();
         $cartItems = $user->cart()->with('product')->get();
-            $allSelected = $cartItems->isNotEmpty() && $cartItems->every(fn($item) => $item->is_selected == 1);
-        $subtotal = $cartItems->where('is_selected', 1)->sum(function($item) {
+        $allSelected = $cartItems->isNotEmpty() && $cartItems->every(fn($item) => $item->is_selected == 1);
+        $subtotal = $cartItems->where('is_selected', 1)->sum(function ($item) {
             return $item->product->price * $item->quantity;
         });
         $shipping = 50;
-            return view('cart.index', compact('cartItems', 'subtotal', 'shipping', 'allSelected'));
+        return view('cart.index', compact('cartItems', 'subtotal', 'shipping', 'allSelected'));
     }
 
     public function show($id)
@@ -102,7 +133,7 @@ class CartController extends Controller
 
     public function removeFromCart($cartItemId)
     {
-        $user = Auth::user(); 
+        $user = Auth::user();
         $cartItem = $user->cart()->where('id', $cartItemId)->first();
         if ($cartItem) {
             $cartItem->delete();
@@ -124,7 +155,7 @@ class CartController extends Controller
     {
         $user = Auth::user();
         $cartItem = $user->cart()->where('id', $cartItemId)->first();
-        
+
         if (!$cartItem) {
             return response()->json(['status' => 'error', 'message' => 'Cart item not found'], 404);
         }
@@ -133,7 +164,7 @@ class CartController extends Controller
             $isSelected = $request->boolean('is_selected');
             $cartItem->is_selected = $isSelected;
             $cartItem->save();
-            
+
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'status' => 'success',
@@ -158,9 +189,9 @@ class CartController extends Controller
         $user = Auth::user();
         try {
             $isSelected = $request->boolean('is_selected');
-            
+
             $user->cart()->update(['is_selected' => $isSelected]);
-            
+
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'status' => 'success',
@@ -182,7 +213,7 @@ class CartController extends Controller
     public function toggle(Request $request)
     {
         $cartItem = Auth::user()->cart()->where('product_id', $request->product_id)->first();
-        if(!$request->product_id){
+        if (!$request->product_id) {
             return back();
         }
         if ($cartItem) {
@@ -226,7 +257,7 @@ class CartController extends Controller
             'user_id' => $user->id,
             'status' => 'pending',
             'shipping_address' => $request->shipping_address,
-            'total_amount' => $cartItems->sum(function($item) {
+            'total_amount' => $cartItems->sum(function ($item) {
                 return $item->quantity * $item->product->price;
             })
         ]);
@@ -261,12 +292,12 @@ class CartController extends Controller
 
         $user = Auth::user();
         $product = Product::findOrFail($request->product_id);
-        
+
         // Check if product already exists in cart
         $existingItem = $user->cart()->where('product_id', $request->product_id)->first();
-        
-        $newQuantity = $existingItem ? 
-            $existingItem->quantity + $request->quantity : 
+
+        $newQuantity = $existingItem ?
+            $existingItem->quantity + $request->quantity :
             $request->quantity;
 
         // Validate against available stock
@@ -308,7 +339,7 @@ class CartController extends Controller
 
         if (!empty($selectedItemsPayload) && is_array($selectedItemsPayload)) {
             // Map payload items (id + quantity) to actual cart items with products
-            $cartItems = collect($selectedItemsPayload)->map(function($item) use ($user) {
+            $cartItems = collect($selectedItemsPayload)->map(function ($item) use ($user) {
                 $cartItem = $user->cart()->with('product')->find($item['id'] ?? null);
                 if ($cartItem) {
                     $cartItem->checkout_quantity = intval($item['quantity'] ?? $cartItem->quantity);
@@ -319,7 +350,7 @@ class CartController extends Controller
             // Fallback: use DB-selected items
             $cartItems = $user->cart()->with('product')->where('is_selected', 1)->get();
             // Set checkout quantity same as cart quantity for selected items
-            $cartItems->each(function($item) {
+            $cartItems->each(function ($item) {
                 $item->checkout_quantity = $item->quantity;
             });
         }
@@ -329,7 +360,7 @@ class CartController extends Controller
         }
 
         // Calculate totals
-        $subtotal = $cartItems->sum(function($item) {
+        $subtotal = $cartItems->sum(function ($item) {
             return $item->product->price * ($item->checkout_quantity ?? $item->quantity);
         });
         $shipping = 50;
@@ -348,81 +379,50 @@ class CartController extends Controller
 
         $subtotal = $cartItems->sum(fn($i) => $i->product->price * $i->quantity);
         $shipping = 0; // หรือคำนวณตามกติกา
-        $total    = $subtotal + $shipping;
+        $total = $subtotal + $shipping;
 
         // $address ดึงจากโปรไฟล์หรือโมเดล Address ของคุณ
         $address = $user->address ?? null;
 
-        return view('cart.checkout', compact('cartItems','subtotal','shipping','total','address'));
+        return view('cart.checkout', compact('cartItems', 'subtotal', 'shipping', 'total', 'address'));
     }
+    public function complete(Request $request)
+    {
 
-public function complete(Request $request)
-{
+        $user = Auth::user();
+        $cart = $user->cart();
+        $cartItem = $cart->where('is_selected', 1)->get();
+        $randomNumber = random_int(1000, 9999999999);
+        try {
+            DB::beginTransaction();
+            $order = Order::create([
+                'user_id' => $user->id,
+                'id' => $randomNumber,
+                'order_item_id' => $randomNumber,
+            ]);
+            foreach ($cartItem as $item) {
+                // create order item
+                OrderItem::create([
+                    'order_item_id' => $randomNumber,
+                    'product_id' => $item->product_id,
+                    'quantity' => $item->quantity,
+                ]);
 
-    $user = Auth::user();
-    $cart = $user->cart();
-    $cartItem = $cart->where('is_selected', 1)->get();
-    $randomNumber = random_int(1000, 9999);
-    $order = Order::create([
-        'user_id'          => $user->id,
-        'order_item_id'  => $randomNumber,
-    ]);
-    foreach ($cartItem as $item) {
-        // create order item
-        OrderItem::create([
-            'id'   => $order->id,
-            'product_id' => $item->product_id,
-            'quantity'   => $item->quantity,
-        ]);
+                // (optional) reduce stock if your products table has such a column
+                if (isset($item->product->in_stock)) {
+                    $item->product->decrement('in_stock', $item->quantity);
+                }
 
-        // (optional) reduce stock if your products table has such a column
-        if (isset($item->product->in_stock)) {
-            $item->product->decrement('in_stock', $item->quantity);
+                // remove from cart
+                $item->delete();
+
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
         }
+        return redirect()->route('purchase.index')->with('success', 'Checkout completed.');
 
-        // remove from cart
-        $item->delete();
     }
-    return redirect()->route('purchase.index')->with('success', 'Checkout completed.');
-    
-    // // 2) Fetch selected cart items with product
-    // $cartItems = $user->cart()
-    //     ->with('product')
-    //     ->where('is_selected', 1)   // <— you already use is_selected elsewhere
-    //     ->get();
-
-    // if ($cartItems->isEmpty()) {
-    //     return back()->with('error', 'No items selected for checkout');
-    // }
-
-    // // 3) Totals
-    // $shipping = (int) $request->input('shipping_fee', 50); // adjust rule as you like
-    // $subtotal = $cartItems->sum(fn($ci) => $ci->product->price * $ci->quantity);
-    // $total    = $subtotal + $shipping;
-
-
-    //     $order = Order::create([
-    //         'user_id'          => $user->id,
-    //         'product_id'       => $cartItems->product_id,
-    //     ]);
-
-    //     foreach ($cartItems as $ci) {
-    //         // create order item
-    //         OrderItem::create([
-    //             'product_id' => $ci->product_id,
-    //             'quantity'   => $ci->quantity,
-    //         ]);
-
-    //         // (optional) reduce stock if your products table has such a column
-    //         if (isset($ci->product->in_stock)) {
-    //             $ci->product->decrement('in_stock', $ci->quantity);
-    //         }
-
-    //         // remove from cart
-    //         $ci->delete();
-    //     }
-    // return redirect()->route('purchase.index')->with('success', 'Checkout completed.');
-}
-
 
 }
