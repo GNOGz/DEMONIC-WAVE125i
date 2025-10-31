@@ -337,9 +337,27 @@ class CartController extends Controller
 
         return view('cart.checkout', compact('cartItems', 'subtotal', 'shipping', 'total', 'user'));
     }
+    public function showCheckout()
+    {
+        $user = Auth::user();
+
+        $cartItems = CartItem::with('product')
+            ->where('user_id', $user->id)
+            ->where('selected', true) // ถ้ามี flag เลือก
+            ->get();
+
+        $subtotal = $cartItems->sum(fn($i) => $i->product->price * $i->quantity);
+        $shipping = 0; // หรือคำนวณตามกติกา
+        $total    = $subtotal + $shipping;
+
+        // $address ดึงจากโปรไฟล์หรือโมเดล Address ของคุณ
+        $address = $user->address ?? null;
+
+        return view('cart.checkout', compact('cartItems','subtotal','shipping','total','address'));
+    }
     public function complete(Request $request)
-{
-    return redirect()->route('cart.index')->with('success', 'Checkout completed.');
-}
+    {
+        return redirect()->route('purchase.index')->with('success','Checkout completed.');
+    }
 
 }

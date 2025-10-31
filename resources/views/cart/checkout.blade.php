@@ -140,7 +140,7 @@
                             </div>
                             <div class="mt-4 text-center">
                                 <p class="text-sm text-gray-600">After payment completed, please click below</p>
-                                <form action="{{ route('cart.index') }}" method="POST" class="mt-2">
+                                <form action="{{ route('cart.checkout.complete') }}" method="POST" class="mt-2">
                                     @csrf
                                     <input type="hidden" name="shipping_address" id="finalShippingAddress">
                                     <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">

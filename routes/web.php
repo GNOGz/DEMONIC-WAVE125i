@@ -64,17 +64,32 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/photo/{filename}', [UserController::class, 'showProfilePhoto'])->where('filename', '.*')->name('user.photo');
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
     Route::get('/purchase', [OrderController::class, 'index'])->name('purchase.index');
-    
     Route::post('/cart/checkout/complete', [CartController::class, 'complete'])->name('cart.checkout.complete');
-    Route::get('/cart/index', [UserController::class, 'cart'])->name('cart.index');
 
     // Cart resource routes
     Route::resource('cart', CartController::class);
-    
+    Route::resource('purchase', OrderController::class);
 });
 
 // Move these outside auth middleware if they should be public
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
+Route::get('/cart/checkout', [CartController::class, 'showCheckout'])
+    ->middleware('auth')
+    ->name('cart.checkout');
 
+// ส่งข้อมูลชำระเงิน/บันทึกออเดอร์ (POST)
+Route::post('/cart/checkout', [CartController::class, 'checkout'])
+    ->middleware('auth')
+    ->name('cart.checkout.submit');
+
+// หรือถ้าคุณใช้ปุ่ม “Complete Checkout” ให้ไป endpoint นี้
+Route::post('/cart/checkout/complete', [CartController::class, 'complete'])
+    ->middleware('auth')
+    ->name('cart.checkout.complete');
+
+// หน้า “My Purchase”
+Route::get('/purchase', [\App\Http\Controllers\OrderController::class, 'index'])
+    ->middleware('auth')
+    ->name('purchase.index');
 require __DIR__.'/auth.php';
