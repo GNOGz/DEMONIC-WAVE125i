@@ -361,15 +361,16 @@ class CartController extends Controller
     $user = Auth::user();
     $cart = $user->cart();
     $cartItem = $cart->where('is_selected', 1)->get();
-    $randomNumber = random_int(1000, 9999);
+    $randomNumber = random_int(1000, 9999999999);
     $order = Order::create([
-        'user_id'          => $user->id,
-        'order_item_id'  => $randomNumber,
+        'user_id'  => $user->id,
+        'id'  => $randomNumber,
+        'order_item_id' =>$randomNumber,
     ]);
     foreach ($cartItem as $item) {
         // create order item
         OrderItem::create([
-            'order_item_id'   => $order->id,
+            'order_item_id'   => $randomNumber,
             'product_id' => $item->product_id,
             'quantity'   => $item->quantity,
         ]);

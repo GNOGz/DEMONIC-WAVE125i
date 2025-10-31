@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OrderItem extends Model
 {
+    protected $primaryKey = 'order_item_id';
+
     protected $fillable = [
         'quantity',
         'price',
@@ -15,13 +17,13 @@ class OrderItem extends Model
         'order_item_id'
     ];
 
-    public function product():HasMany
+    public function product(): BelongsTo
     {
-        return $this->hasMany(Product::class, 'product_id');
+        return $this->belongsTo(Product::class, 'product_id','id');
     }
 
     public function order(): BelongsTo
- {
+    {
         return $this->belongsTo(Order::class, 'order_id');
     }
 }

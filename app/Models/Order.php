@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
-    //
     protected $fillable = [
         'order_item_id',
         'user_id',
+        'id',
     ];
 
     public function user():BelongsTo
@@ -21,7 +21,7 @@ class Order extends Model
 
     public function orderItems():HasMany
     {
-        return $this->hasMany(OrderItem::class, 'id', 'order_item_id');
+        return $this->hasMany(OrderItem::class, 'order_item_id', 'order_item_id');
     }
 
 
