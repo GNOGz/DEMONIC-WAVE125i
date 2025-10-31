@@ -108,13 +108,11 @@
                         var action = json && json.action ? json.action : (json && json.message && json.message.toLowerCase().indexOf('remove') !== -1 ? 'removed' : 'added');
                         var name = (json && json.product_name) ? json.product_name : (json && json.message ? json.message : 'Product');
                         if (action === 'removed') {
-                            // ลบ element ของ product ออกจากหน้า wishlist เพื่อ UX รู้สึกว่าเอาออกทันที
                             var outer = btn.closest('.card-outer');
                             if (outer) {
                                 outer.remove();
                                 showToast('Removed "' + name + '" from wishlist', 'info');
                             } else {
-                                // fallback: เปลี่ยนไอคอน
                                 if (heart) {
                                     heart.classList.remove('text-pink-500');
                                     heart.classList.add('text-gray-400');
