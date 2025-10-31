@@ -58,14 +58,16 @@ Route::middleware('auth')->group(function () {
     Route::patch('/cart/select-all', [CartController::class, 'updateAllSelection'])->name('cart.selectAll');
     Route::patch('/cart/{id}/select', [CartController::class, 'updateSelection'])->name('cart.select');
     Route::post('/cart/{id}/quantity', [CartController::class, 'updateQuantity'])->name('cart.updateQuantity');
-    Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
     Route::post('/cart/payment', [CartController::class, 'processPayment'])->name('cart.payment');
     Route::patch('/profile/photo/update', [UserController::class, 'updateProfilePhoto'])->name('profile.photo.update');
     Route::get('/profile/photo/{filename}', [UserController::class, 'showProfilePhoto'])->where('filename', '.*')->name('user.photo');
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
     Route::get('/purchase', [OrderController::class, 'index'])->name('purchase.index');
+    Route::get('/cart/checkout', [CartController::class, 'showCheckout'])->name('cart.checkout');
+    // ส่งข้อมูลชำระเงิน/บันทึกออเดอร์ (POST)
+    Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout.submit');
+    // หรือถ้าคุณใช้ปุ่ม “Complete Checkout” ให้ไป endpoint นี้
     Route::post('/cart/checkout/complete', [CartController::class, 'complete'])->name('cart.checkout.complete');
-
     // Cart resource routes
     Route::resource('cart', CartController::class);
     Route::resource('purchase', OrderController::class);
@@ -74,19 +76,7 @@ Route::middleware('auth')->group(function () {
 // Move these outside auth middleware if they should be public
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
-Route::get('/cart/checkout', [CartController::class, 'showCheckout'])
-    ->middleware('auth')
-    ->name('cart.checkout');
 
-// ส่งข้อมูลชำระเงิน/บันทึกออเดอร์ (POST)
-Route::post('/cart/checkout', [CartController::class, 'checkout'])
-    ->middleware('auth')
-    ->name('cart.checkout.submit');
-
-// หรือถ้าคุณใช้ปุ่ม “Complete Checkout” ให้ไป endpoint นี้
-Route::post('/cart/checkout/complete', [CartController::class, 'complete'])
-    ->middleware('auth')
-    ->name('cart.checkout.complete');
 
 // หน้า “My Purchase”
 Route::get('/purchase', [\App\Http\Controllers\OrderController::class, 'index'])
