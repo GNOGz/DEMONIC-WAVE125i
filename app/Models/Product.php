@@ -26,6 +26,11 @@ class Product extends Model
         return $this->hasMany(Cart::class, 'product_id');
     }
 
+    public function hasAvailableStock($requestedQuantity = 1)
+    {
+        return $this->in_stock >= $requestedQuantity;
+    }
+
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class, 'product_id');

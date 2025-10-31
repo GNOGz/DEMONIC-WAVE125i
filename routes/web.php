@@ -48,6 +48,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Cart payment processing
+    Route::post('/cart/payment', [CartController::class, 'processPayment'])->name('cart.payment');
     Route::post('/products/{id}/add-to-cart', [ProductController::class, 'addToCart'])->name('products.addToCart');
     Route::post('/products/{id}/wishlist', [ProductController::class, 'addToWishlist'])->name('products.addToWishlist'); 
     Route::patch('/cart/select-all', [CartController::class, 'updateAllSelection'])->name('cart.selectAll');
@@ -57,13 +60,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/cart/payment', [CartController::class, 'processPayment'])->name('cart.payment');
     Route::patch('/profile/photo/update', [UserController::class, 'updateProfilePhoto'])->name('profile.photo.update');
     Route::get('/profile/photo/{filename}', [UserController::class, 'showProfilePhoto'])->where('filename', '.*')->name('user.photo');
-
+    Route::post('/cart/checkout/complete', [CartController::class, 'complete'])->name('cart.checkout.complete');
+    Route::get('/cart/index', [UserController::class, 'cart'])->name('cart.index');
     // Cart resource routes
     Route::resource('cart', CartController::class);
     
-    // Payment flow routes
-    Route::get('/cart/payment', [CartController::class, 'processPayment'])->name('cart.showPayment');
-    Route::post('/cart/payment/confirm', [CartController::class, 'confirmPayment'])->name('cart.confirmPayment');
 });
 
 // Move these outside auth middleware if they should be public
