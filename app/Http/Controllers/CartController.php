@@ -355,9 +355,74 @@ class CartController extends Controller
 
         return view('cart.checkout', compact('cartItems','subtotal','shipping','total','address'));
     }
-    public function complete(Request $request)
-    {
-        return redirect()->route('purchase.index')->with('success','Checkout completed.');
+
+public function complete(Request $request)
+{
+
+    $user = Auth::user();
+    $cart = $user->cart();
+    $cartItem = $cart->where('is_selected', 1)->get();
+    $randomNumber = random_int(1000, 9999);
+    $order = Order::create([
+        'user_id'          => $user->id,
+        'order_item_id'  => $randomNumber,
+    ]);
+    foreach ($cartItem as $item) {
+        // create order item
+        OrderItem::create([
+            'id'   => $order->id,
+            'product_id' => $item->product_id,
+            'quantity'   => $item->quantity,
+        ]);
+
+        // (optional) reduce stock if your products table has such a column
+        if (isset($item->product->in_stock)) {
+            $item->product->decrement('in_stock', $item->quantity);
+        }
+
+        // remove from cart
+        $item->delete();
     }
+    return redirect()->route('purchase.index')->with('success', 'Checkout completed.');
+    
+    // // 2) Fetch selected cart items with product
+    // $cartItems = $user->cart()
+    //     ->with('product')
+    //     ->where('is_selected', 1)   // <— you already use is_selected elsewhere
+    //     ->get();
+
+    // if ($cartItems->isEmpty()) {
+    //     return back()->with('error', 'No items selected for checkout');
+    // }
+
+    // // 3) Totals
+    // $shipping = (int) $request->input('shipping_fee', 50); // adjust rule as you like
+    // $subtotal = $cartItems->sum(fn($ci) => $ci->product->price * $ci->quantity);
+    // $total    = $subtotal + $shipping;
+
+
+    //     $order = Order::create([
+    //         'user_id'          => $user->id,
+    //         'product_id'       => $cartItems->product_id,
+    //     ]);
+
+    //     foreach ($cartItems as $ci) {
+    //         // create order item
+    //         OrderItem::create([
+    //             'product_id' => $ci->product_id,
+    //             'quantity'   => $ci->quantity,
+    //         ]);
+
+    //         // (optional) reduce stock if your products table has such a column
+    //         if (isset($ci->product->in_stock)) {
+    //             $ci->product->decrement('in_stock', $ci->quantity);
+    //         }
+
+    //         // remove from cart
+    //         $ci->delete();
+    //     }
+    // return redirect()->route('purchase.index')->with('success', 'Checkout completed.');
+}
+
 
 }
