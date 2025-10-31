@@ -77,6 +77,9 @@
                 <x-nav-link :href="route('cart.index')" :active="request()->routeIs('cart.index')" class="!text-2xl">
                     {{ __('Cart') }}
                 </x-nav-link>
+                <x-nav-link :href="route('purchase.index')" :active="request()->routeIs('purchase.index')" class="!text-2xl">
+                    {{ __('My Purchases') }}
+                </x-nav-link>
             </div>
         </div>
     </div>

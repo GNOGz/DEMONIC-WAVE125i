@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\OrderController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -29,7 +30,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile/photo/update', [UserController::class, 'updateProfilePhoto'])->name('profile.photo.update');
     Route::get('/profile/photo/{filename}', [UserController::class, 'showProfilePhoto'])->where('filename', '.*')->name('user.photo');
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
-
+    Route::get('/purchase', [OrderController::class, 'index'])->name('purchase.index');
+    
     // Cart resource routes
     Route::resource('cart', CartController::class);
     
