@@ -5,7 +5,7 @@
         <div class="bg-white max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white ">
                 <div class="px-6">
-                    <!-- image -->
+                    <!-- product image -->
                         @if($product->image_url && $product->category)
                             <div class="flex justify-center mb-6">
                                 <div class="w-80 h-100 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
@@ -14,7 +14,7 @@
                             </div>
                         @endif
 
-                    <!-- block detail -->
+                    <!-- details -->
                     <div class="border-t-2 border-b-2 border-gray-300 py-6 mb-6">
                         <h3 class="text-xl  mb-4">{{ $product->name }}</h3>
                         <p class="text-base mb-4">{{ $product->description }}</p>
@@ -26,7 +26,7 @@
                         @endif
                     </div>
 
-                    <!-- แถบเลือกจำนวน แบบ [-][ปริมาณ][+] -->
+                    <!-- quantity selector [-][n][+] -->
                     <style>
                         /* hide native number input spinners so only our -/+ buttons remain visible */
                         input[type=number]::-webkit-outer-spin-button,
@@ -98,7 +98,7 @@
                         })();
                     </script>
 
-                    <!-- Pop-up messages (simple alert or nicer toast) -->
+                    <!-- inline toasts for session messages -->
                     <script>
                         (function(){
                             // Prefer a simple JS alert for now. If session message exists, show it.
