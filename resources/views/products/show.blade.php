@@ -20,7 +20,7 @@
                         <p class="text-base mb-4">{{ $product->description }}</p>
                         <p class="text-base mb-4">in stock : {{ $product->in_stock }}</p>
                         @if($product->in_stock > 0)
-                            <p class="text-xl font-semibold text-green-600">Price : {{ $product->price }} bath</p>
+                            <p class="text-xl font-semibold text-green-600">Price : {{ $product->price }} baht</p>
                         @else
                             <p class="text-xl font-semibold text-red-600">Out of stock</p>
                         @endif
