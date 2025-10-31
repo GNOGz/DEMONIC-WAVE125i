@@ -3,22 +3,25 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
     //
     protected $fillable = [
         'order_item_id',
+        'user_id',
     ];
 
-    public function user():HasOne
+    public function user():BelongsTo
     {
-        return $this->hasOne(User::class, 'id', 'user_id');
+        return $this->belongsTo(User::class, 'id', 'user_id');
     }
 
-    public function orderItems():HasOne
+    public function orderItems():HasMany
     {
-        return $this->hasOne(OrderItem::class, 'id', 'order_item_id');
+        return $this->hasMany(OrderItem::class, 'id', 'order_item_id');
     }
 
 
