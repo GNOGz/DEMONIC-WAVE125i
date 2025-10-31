@@ -6,7 +6,6 @@ use App\Http\Controllers\CartController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Models\Product;
-use App\Models\Wishlist;
 use App\Models\Category;
 
 Route::get('/', function () {
@@ -42,12 +41,7 @@ Route::get('/dashboard', function () {
     // Fetch Eloquent models with category relation loaded so we have an Eloquent collection
     $recommended = Product::with('category')->whereIn('id', $recommendedIds)->get();
 
-    $wishlistIds = [];
-    if (auth()->check()) {
-        $wishlistIds = Wishlist::where('user_id', auth()->id())->pluck('product_id')->toArray();
-    }
-
-    return view('dashboard', ['recommendedProducts' => $recommended, 'wishlistIds' => $wishlistIds]);
+    return view('dashboard', ['recommendedProducts' => $recommended]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -73,9 +67,6 @@ Route::middleware('auth')->group(function () {
 });
 
 // Move these outside auth middleware if they should be public
-Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
-
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
 
