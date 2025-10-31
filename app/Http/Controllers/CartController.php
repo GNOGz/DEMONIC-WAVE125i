@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Cart;
 use App\Models\Product;
+use App\Models\Order;
+use App\Models\OrderItem;
 
 class CartController extends Controller
 {
@@ -18,12 +20,22 @@ class CartController extends Controller
         $user = Auth::user();
         $cartItem = $user->cart()->findOrFail($cartId);
         
-        if ($request->action === 'increment') {
-            $cartItem->quantity += 1;
-        } else {
-            $cartItem->quantity = max(1, $cartItem->quantity - 1);
+        $product = $cartItem->product;
+        $newQuantity = $request->action === 'increment' ? 
+            $cartItem->quantity + 1 : 
+            max(1, $cartItem->quantity - 1);
+
+        if ($request->action === 'increment' && !$product->hasAvailableStock($newQuantity)) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Not enough stock available'
+                ], 422);
+            }
+            return back()->with('error', 'Not enough stock available');
         }
-        
+
+        $cartItem->quantity = $newQuantity;
         $cartItem->save();
         
         if ($request->wantsJson()) {
@@ -196,6 +208,50 @@ class CartController extends Controller
         return back();
     }
 
+    public function processPayment(Request $request)
+    {
+        $request->validate([
+            'shipping_address' => 'required|string'
+        ]);
+
+        $user = Auth::user();
+        $cartItems = $user->cart()->where('is_selected', 1)->get();
+
+        if ($cartItems->isEmpty()) {
+            return back()->with('error', 'No items selected for checkout');
+        }
+
+        // Create new order
+        $order = Order::create([
+            'user_id' => $user->id,
+            'status' => 'pending',
+            'shipping_address' => $request->shipping_address,
+            'total_amount' => $cartItems->sum(function($item) {
+                return $item->quantity * $item->product->price;
+            })
+        ]);
+
+        // Create order items
+        foreach ($cartItems as $cartItem) {
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_id' => $cartItem->product_id,
+                'quantity' => $cartItem->quantity,
+                'price' => $cartItem->product->price
+            ]);
+
+            // Update product stock
+            $product = $cartItem->product;
+            $product->in_stock -= $cartItem->quantity;
+            $product->save();
+
+            // Remove item from cart
+            $cartItem->delete();
+        }
+
+        return redirect()->route('orders.show', $order)->with('success', 'Order placed successfully!');
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -204,13 +260,29 @@ class CartController extends Controller
         ]);
 
         $user = Auth::user();
+        $product = Product::findOrFail($request->product_id);
         
         // Check if product already exists in cart
         $existingItem = $user->cart()->where('product_id', $request->product_id)->first();
         
+        $newQuantity = $existingItem ? 
+            $existingItem->quantity + $request->quantity : 
+            $request->quantity;
+
+        // Validate against available stock
+        if (!$product->hasAvailableStock($newQuantity)) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Not enough stock available'
+                ], 422);
+            }
+            return back()->with('error', 'Not enough stock available');
+        }
+
         if ($existingItem) {
             // Update quantity if product already in cart
-            $existingItem->quantity += $request->quantity;
+            $existingItem->quantity = $newQuantity;
             $existingItem->save();
         } else {
             // Create new cart item
@@ -265,4 +337,9 @@ class CartController extends Controller
 
         return view('cart.checkout', compact('cartItems', 'subtotal', 'shipping', 'total', 'user'));
     }
+    public function complete(Request $request)
+{
+    return redirect()->route('cart.index')->with('success', 'Checkout completed.');
+}
+
 }

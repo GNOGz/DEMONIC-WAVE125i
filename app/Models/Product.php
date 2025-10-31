@@ -12,7 +12,7 @@ class Product extends Model
         'in_stock',
         'description',
         'image_url',
-        'category',
+        'category_id',
     ];
 
     public function category()
@@ -24,6 +24,11 @@ class Product extends Model
     public function carts()
     {
         return $this->hasMany(Cart::class, 'product_id');
+    }
+
+    public function hasAvailableStock($requestedQuantity = 1)
+    {
+        return $this->in_stock >= $requestedQuantity;
     }
 
     public function orderItems()
