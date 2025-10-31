@@ -26,7 +26,7 @@
                             <h4 class="font-bold text-lx mb-2 h-12 overflow-hidden">{{ $product->name }}</h4>
                             <div class="flex items-center justify-between mt-2">
                                 @if($product->in_stock > 0)
-                                    <p class="text-green-600 font-semibold text-xl">{{ $product->price }} bath</p>
+                                    <p class="text-green-600 font-semibold text-xl">{{ $product->price }} baht</p>
                                 @else
                                     <p class="text-red-600 font-semibold text-xl">Out of stock</p>
                                 @endif
